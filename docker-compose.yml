@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:14
+    container_name: disease_reporting_db
+    restart: always
+    environment:
+      POSTGRES_USER: disease_user
+      POSTGRES_PASSWORD: disease_pass
+      POSTGRES_DB: disease_reporting
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
