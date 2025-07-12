@@ -28,7 +28,9 @@ services:
 
   app:
     container_name: app
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     command: >
       bash -c "
         alembic upgrade head &&

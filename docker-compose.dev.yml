@@ -29,7 +29,9 @@ services:
   app:
     env_file: .env
     container_name: app
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     command: >
       bash -c "
         alembic upgrade head &&
