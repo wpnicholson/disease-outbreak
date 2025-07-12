@@ -28,6 +28,22 @@ services:
     depends_on:
       - db
 
+  app:
+    container_name: app
+    build: .
+    command: >
+      bash -c "
+        alembic upgrade head &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+    volumes:
+      - .:/app
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+    restart: always
+
 volumes:
   db_data:
   pgadmin_data:
