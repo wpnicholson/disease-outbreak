@@ -14,6 +14,12 @@ Expected Deliverable: Production-ready code with proper documentation.
 cp .env.example .env
 ```
 
+## Local Development Notes
+
+```Bash
+pip install -r dev-requirements.txt
+```
+
 ## Technical Requirements
 
 ### Framework & Technology Stack

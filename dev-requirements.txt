@@ -1,0 +1,14 @@
+# Include the production requirements.
+-r requirements.txt
+
+# Development dependencies.
+psycopg2-binary
+python-dotenv
+pytest
+pytest-cov
+flake8
+black
+mypy
+mypy-extensions
+pycodestyle
+pydocstyle

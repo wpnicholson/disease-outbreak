@@ -2,9 +2,7 @@ fastapi[standard]
 uvicorn[standard]
 SQLAlchemy
 asyncpg
-psycopg2-binary
+psycopg2
 alembic
 pydantic
-python-dotenv
-pytest
 requests
