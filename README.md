@@ -6,6 +6,14 @@ Develop a web application that allows healthcare professionals to submit and man
 
 Expected Deliverable: Production-ready code with proper documentation.
 
+## Environment Variables
+
+1. Copy `.env.example` to `.env`
+
+```bash
+cp .env.example .env
+```
+
 ## Technical Requirements
 
 ### Framework & Technology Stack

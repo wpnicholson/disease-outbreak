@@ -3,7 +3,7 @@ version: "3.9"
 services:
   db:
     image: postgres:14
-    container_name: disease_reporting_db
+    container_name: outbreak_db_container
     restart: always
     environment:
       - POSTGRES_USER=${DB_USER}
@@ -13,6 +13,18 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: outbreak_pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
 
 volumes:
   db_data:
