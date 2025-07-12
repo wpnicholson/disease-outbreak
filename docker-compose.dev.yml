@@ -32,6 +32,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
+    working_dir: /
     command: >
       bash -c "
         alembic upgrade head &&
