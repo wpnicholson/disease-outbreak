@@ -1,8 +1,12 @@
-# Include the production requirements.
--r requirements.txt
-
 # Development dependencies.
+fastapi[standard]
+uvicorn[standard]
+SQLAlchemy
 psycopg2-binary
+asyncpg
+alembic
+pydantic
+requests
 python-dotenv
 pytest
 pytest-cov
