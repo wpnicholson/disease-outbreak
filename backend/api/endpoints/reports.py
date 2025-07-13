@@ -50,7 +50,7 @@ def update_report(
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-    if report.status.value != models.ReportStateEnum.draft.value:
+    if report.status.value != ReportStateEnum.draft.value:
         raise HTTPException(status_code=400, detail="Only draft reports can be updated")
 
     report.status = updated_data.status
@@ -67,7 +67,7 @@ def delete_report(report_id: int, db: Session = Depends(get_db)):
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-    if report.status.value != models.ReportStateEnum.draft.value:
+    if report.status.value != ReportStateEnum.draft.value:
         raise HTTPException(status_code=400, detail="Only draft reports can be deleted")
 
     db.delete(report)
@@ -84,7 +84,7 @@ def submit_report(report_id: int, db: Session = Depends(get_db)):
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
 
-    if report.status != models.ReportStateEnum.draft:
+    if report.status != ReportStateEnum.draft:
         raise HTTPException(
             status_code=400, detail="Only draft reports can be submitted"
         )

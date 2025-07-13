@@ -4,13 +4,14 @@ from typing import List, Optional
 
 from api import models, schemas
 from api.dependencies import get_db
+from api.enums import ReportStateEnum
 
 router = APIRouter()
 
 
 @router.get("/search", response_model=List[schemas.Report])
 def search_reports(
-    status: Optional[models.ReportStateEnum] = Query(None),
+    status: Optional[ReportStateEnum] = Query(None),
     disease_name: Optional[str] = Query(None),
     hospital_name: Optional[str] = Query(None),
     skip: int = 0,

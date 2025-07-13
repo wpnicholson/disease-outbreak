@@ -4,6 +4,7 @@ from datetime import date
 
 from api import models, schemas
 from api.dependencies import get_db
+from api.enums import ReportStateEnum
 
 router = APIRouter()
 
@@ -37,7 +38,7 @@ def upsert_patient(
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
-    if report.status != models.ReportStateEnum.draft:
+    if report.status != ReportStateEnum.draft:
         raise HTTPException(
             status_code=400, detail="Cannot modify patient in non-draft report"
         )
