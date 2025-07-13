@@ -27,12 +27,11 @@ services:
       - db
 
   app:
-    env_file: .env
     container_name: app
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile.dev
-    working_dir: /
+    working_dir: /app/backend
     command: >
       bash -c "
         alembic upgrade head &&
@@ -42,6 +41,9 @@ services:
       - .:/app
     ports:
       - 8000:8000
+    environment:
+      ENV: dev
+      DEBUG: "true"
     depends_on:
       - db
     restart: always
