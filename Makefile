@@ -36,10 +36,6 @@ migrate:
 upgrade:
 	$(DC) exec $(SERVICE) bash -c "cd /code && alembic upgrade head"
 
-## Run tests (inside backend container)
-test:
-	$(DC) exec $(SERVICE) bash -c "cd /code && pytest backend/tests"
-
 ## Lint with flake8
 lint:
 	$(DC) exec $(SERVICE) bash -c "cd /code && flake8 ."
@@ -51,6 +47,10 @@ format:
 ## Run FastAPI server manually (useful for debugging command override)
 serve:
 	$(DC) exec $(SERVICE) bash -c "cd /code && uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload"
+
+## Run tests (inside backend container)
+test:
+	$(DC) exec $(SERVICE) bash -c "cd /code && pytest tests"
 
 ## Run tests from project root (basic)
 pytest-root:
