@@ -38,7 +38,7 @@ upgrade:
 
 ## Run tests (inside backend container)
 test:
-	$(DC) exec $(SERVICE) bash -c "cd /code && pytest"
+	$(DC) exec $(SERVICE) bash -c "cd /code && pytest backend/tests"
 
 ## Lint with flake8
 lint:
