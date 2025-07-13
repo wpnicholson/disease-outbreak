@@ -147,10 +147,9 @@ class Report(Base):
     updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), onupdate=func.now()
     )
-    # This could potentially be moved to a separate user model if needed.
-    created_by: Mapped[Optional[int]] = mapped_column(
-        ForeignKey("reporters.id"), nullable=True
-    )
+    # Moved to a separate User model.
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    creator: Mapped[User] = relationship("User", back_populates="reports")
 
     reporter_id: Mapped[Optional[int]] = mapped_column(ForeignKey("reporters.id"))
     reporter: Mapped[Optional[Reporter]] = relationship(
@@ -163,3 +162,28 @@ class Report(Base):
     disease: Mapped[Optional[Disease]] = relationship(
         "Disease", uselist=False, back_populates="report"
     )
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+
+    # Unique login.
+    email: Mapped[str] = mapped_column(
+        String(100), nullable=False, unique=True, index=True
+    )
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    full_name: Mapped[str] = mapped_column(String(100), nullable=True)
+    is_active: Mapped[bool] = mapped_column(default=True)
+
+    # Audit fields for tracking creation and updates.
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    updated_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), onupdate=func.now()
+    )
+
+    # Relationship to the Report created by this user.
+    reports: Mapped[List["Report"]] = relationship("Report", back_populates="creator")

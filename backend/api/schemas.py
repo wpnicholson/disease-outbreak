@@ -107,3 +107,24 @@ class StatisticsSummary(BaseModel):
     diseases_by_severity: Dict[str, int]
     average_patient_age: Optional[float]
     most_common_disease: Optional[str]
+
+
+class UserBase(BaseModel):
+    email: EmailStr
+    full_name: Optional[str] = Field(None, max_length=100)
+
+
+class UserCreate(UserBase):
+    password: str = Field(..., min_length=8, max_length=128)
+
+
+# For safe user data exposure.
+class UserRead(UserBase):
+    id: int
+    is_active: bool
+    created_at: datetime
+    updated_at: Optional[datetime]
+
+    # Enables SQLAlchemy ORM compatibility with Pydantic models.
+    class Config:
+        orm_mode = True
