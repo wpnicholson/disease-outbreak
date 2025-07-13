@@ -139,11 +139,17 @@ class Report(Base):
     status: Mapped[ReportStateEnum] = mapped_column(
         SqlEnum(ReportStateEnum), default=ReportStateEnum.draft, nullable=False
     )
+
+    # Database Design - Include audit fields (`created_at`, `updated_at`, `created_by`).
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
     updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), onupdate=func.now()
+    )
+    # This could potentially be moved to a separate user model if needed.
+    created_by: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("reporters.id"), nullable=True
     )
 
     reporter_id: Mapped[Optional[int]] = mapped_column(ForeignKey("reporters.id"))
