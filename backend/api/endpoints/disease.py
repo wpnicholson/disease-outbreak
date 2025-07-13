@@ -52,7 +52,7 @@ def upsert_disease(
     else:
         new_disease = models.Disease(**disease_data.dict())
         db.add(new_disease)
-        report.reporter = new_disease
+        report.disease = new_disease
 
     db.commit()
     db.refresh(report)
