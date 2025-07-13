@@ -43,6 +43,7 @@ class Reporter(Base):
     last_name: Mapped[str] = mapped_column(String(50), nullable=False)
 
     # Email (required, unique, valid email format).
+    # Validation Rules: Email uniqueness per reporter.
     email: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
 
     # Job title (required, max 100 chars).

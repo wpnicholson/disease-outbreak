@@ -46,24 +46,26 @@ def upsert_disease(
             status_code=400, detail="Cannot add disease before patient is set"
         )
 
+    # Validation Rules: Cross-field validation (disease date vs patient DOB).
     if disease_data.date_detected < report.patient.date_of_birth:
         raise HTTPException(
             status_code=400,
             detail="Disease detection date cannot be before patient's date of birth",
         )
 
+    # Validation Rules: date range validations.
     if disease_data.date_detected > date.today():
         raise HTTPException(
             status_code=400,
             detail="Disease detection date cannot be in the future",
         )
 
-    # Check if the report already has a disease
+    # Check if the report already has a disease.
     if report.disease:
         db.delete(report.disease)
         db.flush()
 
-    # Always create a new Disease per report
+    # Always create a new Disease per report.
     new_disease = models.Disease(**disease_data.model_dump())
     report.disease = new_disease
     db.add(new_disease)
