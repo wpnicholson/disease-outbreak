@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from api import models, schemas
 from api.dependencies import get_db
+from datetime import date
 
 router = APIRouter()
 
@@ -28,7 +29,7 @@ def get_disease(report_id: int, db: Session = Depends(get_db)):
 @router.post(
     "/{report_id}/disease",
     response_model=schemas.Disease,
-    status_code=status.HTTP_201_CREATED,
+    status_code=status.HTTP_200_OK,
 )
 def upsert_disease(
     report_id: int, disease_data: schemas.DiseaseCreate, db: Session = Depends(get_db)
@@ -40,19 +41,32 @@ def upsert_disease(
         raise HTTPException(
             status_code=400, detail="Cannot modify disease in non-draft report"
         )
+    if not report.patient:
+        raise HTTPException(
+            status_code=400, detail="Cannot add disease before patient is set"
+        )
 
-    # If disease already exists (via disease_name), use it
-    existing_disease = (
-        db.query(models.Disease)
-        .filter(models.Disease.disease_name == disease_data.disease_name)
-        .first()
-    )
-    if existing_disease:
-        report.disease = existing_disease
-    else:
-        new_disease = models.Disease(**disease_data.dict())
-        db.add(new_disease)
-        report.disease = new_disease
+    if disease_data.date_detected < report.patient.date_of_birth:
+        raise HTTPException(
+            status_code=400,
+            detail="Disease detection date cannot be before patient's date of birth",
+        )
+
+    if disease_data.date_detected > date.today():
+        raise HTTPException(
+            status_code=400,
+            detail="Disease detection date cannot be in the future",
+        )
+
+    # Check if the report already has a disease
+    if report.disease:
+        db.delete(report.disease)
+        db.flush()
+
+    # Always create a new Disease per report
+    new_disease = models.Disease(**disease_data.model_dump())
+    report.disease = new_disease
+    db.add(new_disease)
 
     db.commit()
     db.refresh(report)

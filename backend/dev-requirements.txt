@@ -6,6 +6,8 @@ psycopg2-binary
 asyncpg
 alembic
 pydantic
+pydantic-extra-types
+phonenumbers
 requests
 python-dotenv
 pytest

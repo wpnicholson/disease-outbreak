@@ -6,4 +6,6 @@ psycopg2
 asyncpg
 alembic
 pydantic
+pydantic-extra-types
+phonenumbers
 requests
