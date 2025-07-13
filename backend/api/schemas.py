@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr, Field
-from typing import Optional, List
+from typing import Optional, List, Dict
 from datetime import date, datetime
 import enum
 
@@ -124,3 +124,12 @@ class Report(ReportBase):
 
     class Config:
         orm_mode = True
+
+
+class StatisticsSummary(BaseModel):
+    total_reports: int
+    reports_by_status: Dict[str, int]
+    diseases_by_category: Dict[str, int]
+    diseases_by_severity: Dict[str, int]
+    average_patient_age: Optional[float]
+    most_common_disease: Optional[str]
