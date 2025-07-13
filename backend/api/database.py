@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
 
-from api.models import Base
+from api.models import Base  # noqa: F401
 
 
 # Load environment variables if not in production
