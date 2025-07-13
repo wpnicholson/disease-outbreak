@@ -51,3 +51,15 @@ format:
 ## Run FastAPI server manually (useful for debugging command override)
 serve:
 	$(DC) exec $(SERVICE) bash -c "cd /code && uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload"
+
+## Run tests from project root (basic)
+pytest-root:
+	pytest backend/tests
+
+## Run tests with coverage report
+pytest-cov:
+	pytest --cov=backend/api backend/tests
+
+## Run tests with verbose output
+pytest-verbose:
+	pytest -v backend/tests
