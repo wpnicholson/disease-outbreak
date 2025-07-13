@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-
+from typing import List
 from api import models, schemas
 from api.dependencies import get_db
+from api.enums import DiseaseCategoryEnum
 from datetime import date
 
 router = APIRouter()
@@ -73,3 +74,11 @@ def upsert_disease(
     db.commit()
     db.refresh(report)
     return report.disease
+
+
+# --------------------------
+# Get all disease categories (enum values)
+# --------------------------
+@router.get("/diseases/categories", response_model=List[str])
+def get_disease_categories():
+    return [category.value for category in DiseaseCategoryEnum]
