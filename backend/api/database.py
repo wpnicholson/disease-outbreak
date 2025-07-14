@@ -4,15 +4,15 @@ import os
 
 from api.models import Base  # noqa: F401
 
+# Always load .env file first
+try:
+    from dotenv import load_dotenv
 
-# Load environment variables if not in production
-if os.getenv("ENV") != "prod":
-    try:
-        from dotenv import load_dotenv
-
-        load_dotenv()
-    except ImportError:
+    load_dotenv()
+except ImportError:
+    if os.getenv("ENV") != "prod":
         print("Warning: dotenv not installed. Environment variables may not be loaded.")
+
 
 # Get DATABASE_URL
 DATABASE_URL: str | None = os.getenv("DATABASE_URL")
