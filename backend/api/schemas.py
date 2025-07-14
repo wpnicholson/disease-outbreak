@@ -23,7 +23,18 @@ class ReporterBase(BaseModel):
 
 
 class ReporterCreate(ReporterBase):
-    pass
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "first_name": "Alice",
+                "last_name": "Doe",
+                "email": "alice.doe@example.com",
+                "job_title": "Epidemiologist",
+                "phone_number": "+1234567890",
+                "hospital_name": "City Hospital",
+                "hospital_address": "123 Health St, Metropolis",
+            }
+        }
 
 
 class Reporter(ReporterBase):
@@ -46,7 +57,19 @@ class PatientBase(BaseModel):
 
 
 class PatientCreate(PatientBase):
-    pass
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "first_name": "John",
+                "last_name": "Doe",
+                "date_of_birth": "1990-01-01",
+                "gender": GenderEnum.male,
+                "medical_record_number": "MRN123456",
+                "patient_address": "456 Health Ave, Wellness City",
+                "emergency_contact": "Jane Doe, +1234567890",
+                "report_id": 1,
+            }
+        }
 
 
 class Patient(PatientBase):
@@ -68,7 +91,18 @@ class DiseaseBase(BaseModel):
 
 
 class DiseaseCreate(DiseaseBase):
-    pass
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "disease_name": "Influenza",
+                "disease_category": DiseaseCategoryEnum.viral,
+                "date_detected": "2023-10-01",
+                "symptoms": ["fever", "cough"],
+                "severity_level": SeverityLevelEnum.medium,
+                "treatment_status": TreatmentStatusEnum.ongoing,
+                "report_id": 1,
+            }
+        }
 
 
 class Disease(DiseaseBase):
@@ -84,7 +118,14 @@ class ReportBase(BaseModel):
 
 
 class ReportCreate(ReportBase):
-    pass
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "status": ReportStateEnum.draft,
+                "created_by": 1,
+                "reporter_id": 1,
+            }
+        }
 
 
 class Report(ReportBase):
@@ -116,6 +157,16 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8, max_length=128)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "email": "bob.smith@example.com",
+                "hashed_password": "hashed_password_here",
+                "full_name": "Bob Smith",
+                "is_active": True,
+            }
+        }
 
 
 # For safe user data exposure.
