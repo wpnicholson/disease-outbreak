@@ -19,3 +19,4 @@ mypy-extensions
 pycodestyle
 pydocstyle
 passlib
+python-jose

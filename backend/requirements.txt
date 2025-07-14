@@ -10,3 +10,4 @@ pydantic-extra-types
 phonenumbers
 requests
 passlib
+python-jose
