@@ -128,3 +128,16 @@ class UserRead(UserBase):
     # Enables SQLAlchemy ORM compatibility with Pydantic models.
     class Config:
         from_attributes = True
+
+
+class AuditLog(BaseModel):
+    id: int
+    timestamp: datetime
+    user_id: Optional[int]
+    action: str
+    entity_type: str
+    entity_id: int
+    changes: Optional[dict]
+
+    class Config:
+        from_attributes = True
