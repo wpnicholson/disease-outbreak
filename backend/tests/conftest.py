@@ -3,7 +3,10 @@ from api.database import Base, engine
 from fastapi.testclient import TestClient
 from api.main import app
 
-client = TestClient(app)
+
+@pytest.fixture(scope="module")
+def client():
+    return TestClient(app)
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -14,7 +17,7 @@ def setup_test_database():
 
 
 @pytest.fixture(scope="module")
-def test_user():
+def test_user(client):
     signup_resp = client.post(
         "/api/auth/signup",
         json={
