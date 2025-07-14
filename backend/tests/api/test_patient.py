@@ -35,3 +35,28 @@ def test_patient_validation(test_user):
         },
     )
     assert invalid_resp.status_code == 400
+
+
+def test_patient_missing_reporter(test_user):
+    report_id = client.post("/api/reports/", params={"created_by": test_user}).json()[
+        "id"
+    ]
+    response = client.post(
+        f"/api/reports/{report_id}/patient",
+        json={
+            "first_name": "Anna",
+            "last_name": "Smith",
+            "date_of_birth": "1990-01-01",
+            "gender": "Female",
+            "medical_record_number": "MRN001",
+            "patient_address": "Address",
+            "emergency_contact": "N/A",
+        },
+    )
+    assert response.status_code == 400
+
+
+def test_get_patient_not_found(test_user):
+    invalid_report = 99999
+    response = client.get(f"/api/reports/{invalid_report}/patient")
+    assert response.status_code == 404

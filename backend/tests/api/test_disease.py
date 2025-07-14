@@ -47,3 +47,39 @@ def test_disease_crossfield_validation(test_user):
         },
     )
     assert disease_resp.status_code == 400
+
+
+def test_disease_missing_patient(test_user):
+    report_id = client.post("/api/reports/", params={"created_by": test_user}).json()[
+        "id"
+    ]
+    client.post(
+        f"/api/reports/{report_id}/reporter",
+        json={
+            "first_name": "Mark",
+            "last_name": "Jones",
+            "email": "mark@example.com",
+            "job_title": "Doctor",
+            "phone_number": "+222222222",
+            "hospital_name": "Metro",
+            "hospital_address": "456 St",
+        },
+    )
+    response = client.post(
+        f"/api/reports/{report_id}/disease",
+        json={
+            "disease_name": "Cold",
+            "disease_category": "Viral",
+            "date_detected": "2020-01-01",
+            "symptoms": ["Sneezing"],
+            "severity_level": "Low",
+            "treatment_status": "Ongoing",
+        },
+    )
+    assert response.status_code == 400
+
+
+def test_get_disease_not_found(test_user):
+    invalid_report = 99999
+    response = client.get(f"/api/reports/{invalid_report}/disease")
+    assert response.status_code == 404
