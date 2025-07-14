@@ -12,7 +12,13 @@ router = APIRouter()
 # --------------------------
 # Get disease for a report
 # --------------------------
-@router.get("/{report_id}/disease", response_model=schemas.Disease)
+@router.get(
+    "/{report_id}/disease",
+    response_model=schemas.Disease,
+    summary="Get disease for report",
+    description="Fetches the disease associated with a specific report.",
+    response_description="Disease details associated with the report.",
+)
 def get_disease(report_id: int, db: Session = Depends(get_db)):
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
     if not report:
@@ -31,6 +37,9 @@ def get_disease(report_id: int, db: Session = Depends(get_db)):
     "/{report_id}/disease",
     response_model=schemas.Disease,
     status_code=status.HTTP_200_OK,
+    summary="Add or update disease for report",
+    description="Adds or updates the disease associated with a specific report.",
+    response_description="Disease details after adding or updating.",
 )
 def upsert_disease(
     report_id: int, disease_data: schemas.DiseaseCreate, db: Session = Depends(get_db)
@@ -79,6 +88,12 @@ def upsert_disease(
 # --------------------------
 # Get all disease categories (enum values)
 # --------------------------
-@router.get("/diseases/categories", response_model=List[str])
+@router.get(
+    "/diseases/categories",
+    response_model=List[str],
+    summary="Get disease categories",
+    description="Fetches all disease categories defined in the system.",
+    response_description="List of disease categories.",
+)
 def get_disease_categories():
     return [category.value for category in DiseaseCategoryEnum]

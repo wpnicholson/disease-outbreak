@@ -13,7 +13,14 @@ router = APIRouter()
 # --------------------------
 # Create new report - POST /api/reports
 # --------------------------
-@router.post("/", response_model=schemas.Report, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/",
+    response_model=schemas.Report,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a new report",
+    description="Create a new report with the given details. The report will be in 'Draft' status initially.",
+    response_description="Report created successfully",
+)
 def create_report(created_by: int, db: Session = Depends(get_db)):
     report = models.Report(created_by=created_by)
     db.add(report)
@@ -35,7 +42,13 @@ def create_report(created_by: int, db: Session = Depends(get_db)):
 # --------------------------
 # List reports (paginated) - GET /api/reports
 # --------------------------
-@router.get("/", response_model=List[schemas.Report])
+@router.get(
+    "/",
+    response_model=List[schemas.Report],
+    summary="List reports",
+    description="Retrieve a paginated list of reports.",
+    response_description="List of reports",
+)
 def list_reports(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
     return db.query(models.Report).offset(skip).limit(limit).all()
 
@@ -43,7 +56,13 @@ def list_reports(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
 # --------------------------
 # Get a specific report by ID - GET /api/reports/{report_id}
 # --------------------------
-@router.get("/{report_id}", response_model=schemas.Report)
+@router.get(
+    "/{report_id}",
+    response_model=schemas.Report,
+    summary="Get report by ID",
+    description="Retrieve a specific report by its ID.",
+    response_description="Report details",
+)
 def get_report(report_id: int, db: Session = Depends(get_db)):
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
     if not report:
@@ -54,7 +73,13 @@ def get_report(report_id: int, db: Session = Depends(get_db)):
 # --------------------------
 # Update a report (only if status is Draft)
 # --------------------------
-@router.put("/{report_id}", response_model=schemas.Report)
+@router.put(
+    "/{report_id}",
+    response_model=schemas.Report,
+    summary="Update report",
+    description="Update a report's details. Only reports with 'Draft' status can be updated.",
+    response_description="Updated report details",
+)
 def update_report(
     report_id: int, updated_data: schemas.ReportCreate, db: Session = Depends(get_db)
 ):
@@ -73,7 +98,13 @@ def update_report(
 # --------------------------
 # Delete a report (only if status is Draft)
 # --------------------------
-@router.delete("/{report_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{report_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete report",
+    description="Delete a report by its ID. Only reports with 'Draft' status can be deleted.",
+    response_description="Report deleted successfully",
+)
 def delete_report(report_id: int, db: Session = Depends(get_db)):
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
     if not report:
@@ -89,7 +120,13 @@ def delete_report(report_id: int, db: Session = Depends(get_db)):
 # --------------------------
 # Submit a report (change status to 'submitted')
 # --------------------------
-@router.post("/{report_id}/submit", status_code=status.HTTP_200_OK)
+@router.post(
+    "/{report_id}/submit",
+    status_code=status.HTTP_200_OK,
+    summary="Submit report",
+    description="Submit a report by changing its status to 'submitted'. Only reports in 'Draft' status can be submitted.",
+    response_description="Report submitted successfully",
+)
 def submit_report(report_id: int, db: Session = Depends(get_db)):
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
     if not report:
@@ -116,7 +153,13 @@ def submit_report(report_id: int, db: Session = Depends(get_db)):
 # --------------------------
 # Get recent submitted reports (most recent 10)
 # --------------------------
-@router.get("/recent", response_model=List[schemas.Report])
+@router.get(
+    "/recent",
+    response_model=List[schemas.Report],
+    summary="Get recent reports",
+    description="Retrieve the most recent 10 submitted reports.",
+    response_description="List of recent reports",
+)
 def get_recent_reports(db: Session = Depends(get_db)):
     recent = (
         db.query(models.Report)

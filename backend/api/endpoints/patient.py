@@ -12,7 +12,13 @@ router = APIRouter()
 # --------------------------
 # Get patient details for a report
 # --------------------------
-@router.get("/{report_id}/patient", response_model=schemas.Patient)
+@router.get(
+    "/{report_id}/patient",
+    response_model=schemas.Patient,
+    summary="Get patient details for a report",
+    description="Retrieves the patient details associated with a specific report.",
+    response_description="Patient details.",
+)
 def get_patient(report_id: int, db: Session = Depends(get_db)):
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
     if not report:
@@ -31,6 +37,10 @@ def get_patient(report_id: int, db: Session = Depends(get_db)):
     "/{report_id}/patient",
     response_model=schemas.Patient,
     status_code=status.HTTP_201_CREATED,
+    summary="Add or update patient details for a report",
+    description="Adds or updates the patient details associated with a specific report. "
+    "This can only be done if the report is in draft state and has a reporter set.",
+    response_description="Patient details after upsert.",
 )
 def upsert_patient(
     report_id: int, patient_data: schemas.PatientCreate, db: Session = Depends(get_db)

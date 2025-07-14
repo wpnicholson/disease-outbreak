@@ -9,7 +9,13 @@ from api.dependencies import get_db
 router = APIRouter()
 
 
-@router.get("/", response_model=List[schemas.AuditLog])
+@router.get(
+    "/",
+    response_model=List[schemas.AuditLog],
+    summary="Get audit logs",
+    description="Fetches audit logs with optional date filtering and pagination.",
+    response_description="List of audit logs.",
+)
 def get_audit_logs(
     start_date: Optional[datetime] = Query(None),
     end_date: Optional[datetime] = Query(None),

@@ -10,7 +10,12 @@ from api.dependencies import get_db
 router = APIRouter()
 
 
-@router.get("/export/{format}")
+@router.get(
+    "/export/{format}",
+    summary="Export reports in specified format",
+    description="Exports all reports in the specified format (JSON or CSV).",
+    response_description="Exported report data.",
+)
 def export_reports(format: str, db: Session = Depends(get_db)):
     if format.lower() not in {"json", "csv"}:
         raise HTTPException(status_code=400, detail="Format must be 'json' or 'csv'")

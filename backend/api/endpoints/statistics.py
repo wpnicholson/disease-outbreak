@@ -9,7 +9,13 @@ from api.dependencies import get_db
 router = APIRouter()
 
 
-@router.get("/statistics", response_model=schemas.StatisticsSummary)
+@router.get(
+    "/statistics",
+    response_model=schemas.StatisticsSummary,
+    summary="Get aggregate disease report statistics",
+    description="Returns counts of reports by status, disease category, severity, average patient age, and most common disease.",
+    response_description="Statistics summary of reports in the system.",
+)
 def get_statistics(db: Session = Depends(get_db)):
     total_reports = db.query(func.count(models.Report.id)).scalar()
 

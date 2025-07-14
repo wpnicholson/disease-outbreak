@@ -22,7 +22,12 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 # POST /api/auth/signup
 # -------------------------------
 @router.post(
-    "/signup", response_model=schemas.UserRead, status_code=status.HTTP_201_CREATED
+    "/signup",
+    response_model=schemas.UserRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="User Signup",
+    description="Create a new user account.",
+    response_description="The newly created user account.",
 )
 def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     # Check if user already exists
@@ -51,7 +56,12 @@ def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
 # -------------------------------
 # POST /api/auth/login
 # -------------------------------
-@router.post("/login")
+@router.post(
+    "/login",
+    summary="User Login",
+    description="Authenticate user and return access token.",
+    response_description="Access token for the user.",
+)
 def login(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == user_data.email).first()
     if not user:

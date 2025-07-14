@@ -11,7 +11,13 @@ router = APIRouter()
 # --------------------------
 # Get reporter for a report
 # --------------------------
-@router.get("/{report_id}/reporter", response_model=schemas.Reporter)
+@router.get(
+    "/{report_id}/reporter",
+    response_model=schemas.Reporter,
+    summary="Get reporter for a report",
+    description="Retrieve the reporter associated with a specific report by its ID.",
+    response_description="Reporter details",
+)
 def get_reporter(report_id: int, db: Session = Depends(get_db)):
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
     if not report:
@@ -30,6 +36,9 @@ def get_reporter(report_id: int, db: Session = Depends(get_db)):
     "/{report_id}/reporter",
     response_model=schemas.Reporter,
     status_code=status.HTTP_201_CREATED,
+    summary="Add or update reporter for a report",
+    description="Add a new reporter or update an existing reporter associated with a specific report by its ID.",
+    response_description="Reporter details",
 )
 def upsert_reporter(
     report_id: int, reporter_data: schemas.ReporterCreate, db: Session = Depends(get_db)

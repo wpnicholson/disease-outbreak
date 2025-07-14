@@ -9,7 +9,13 @@ from api.enums import ReportStateEnum
 router = APIRouter()
 
 
-@router.get("/search", response_model=List[schemas.Report])
+@router.get(
+    "/search",
+    response_model=List[schemas.Report],
+    summary="Search Reports",
+    description="Search for reports based on status, disease name, or hospital name.",
+    response_description="A list of reports matching the search criteria.",
+)
 def search_reports(
     status: Optional[ReportStateEnum] = Query(None),
     disease_name: Optional[str] = Query(None),
