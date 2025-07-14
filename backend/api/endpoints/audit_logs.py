@@ -1,3 +1,12 @@
+"""Audit Logs Endpoint
+
+This module provides an endpoint to retrieve audit logs from the database.
+It supports optional date filtering and pagination.
+
+Returns:
+    - List of audit logs with optional date filtering and pagination.
+"""
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from datetime import datetime
@@ -24,6 +33,18 @@ def get_audit_logs(
     limit: int = 20,
     db: Session = Depends(get_db),
 ):
+    """Fetch audit logs with optional date filtering and pagination.
+
+    Args:
+        start_date (Optional[datetime], optional): Date from which to retrieve audit logs. Defaults to Query(None).
+        end_date (Optional[datetime], optional): Date until which to retrieve audit logs. Defaults to Query(None).
+        skip (int, optional): Number of logs to skip for pagination. Defaults to 0.
+        limit (int, optional): Maximum number of logs to return. Defaults to 20.
+        db (Session, optional): Database session dependency. Defaults to Depends(get_db). Defaults to Depends(get_db).
+
+    Returns:
+        List[schemas.AuditLog]: List of audit logs filtered by date and paginated.
+    """
     query = db.query(models.AuditLog)
 
     if start_date:

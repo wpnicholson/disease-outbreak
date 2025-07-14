@@ -1,3 +1,18 @@
+"""Get disease categories endpoint.
+
+Raises:
+    HTTPException: _description_
+    HTTPException: _description_
+    HTTPException: _description_
+    HTTPException: _description_
+    HTTPException: _description_
+    HTTPException: _description_
+    HTTPException: _description_
+
+Returns:
+    _type_: _description_
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -26,6 +41,19 @@ router = APIRouter()
     },
 )
 def get_disease(report_id: int, db: Session = Depends(get_db)):
+    """Fetches the disease associated with a specific report.
+
+    Args:
+        report_id (int): _description_
+        db (Session, optional): _description_. Defaults to Depends(get_db).
+
+    Raises:
+        HTTPException: _description_
+        HTTPException: _description_
+
+    Returns:
+        _type_: _description_
+    """
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
@@ -60,6 +88,23 @@ def get_disease(report_id: int, db: Session = Depends(get_db)):
 def upsert_disease(
     report_id: int, disease_data: schemas.DiseaseCreate, db: Session = Depends(get_db)
 ):
+    """Adds or updates the disease associated with a specific report.
+
+    Args:
+        report_id (int): _id of the report to which the disease is associated.
+        disease_data (schemas.DiseaseCreate): Data for the disease to be added or updated.
+        db (Session, optional): Database session. Defaults to Depends(get_db).
+
+    Raises:
+        HTTPException: Report not found.
+        HTTPException: Report cannot be modified if not in draft state.
+        HTTPException: Cannot add disease before patient is set.
+        HTTPException: Disease detection date cannot be before patient's date of birth.
+        HTTPException: Disease detection date cannot be in the future.
+
+    Returns:
+        _type_: The updated or newly created disease associated with the report.
+    """
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
@@ -120,4 +165,9 @@ def upsert_disease(
     },
 )
 def get_disease_categories():
+    """Fetches all disease categories defined in the system.
+
+    Returns:
+        List[str]: A list of disease category names defined in the DiseaseCategoryEnum.
+    """
     return [category.value for category in DiseaseCategoryEnum]

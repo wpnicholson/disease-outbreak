@@ -1,3 +1,14 @@
+"""User authentication endpoints for signup and login.
+
+Raises:
+    HTTPException:
+    HTTPException: _description_
+    HTTPException: _description_
+
+Returns:
+    dict: Mock access token for the user.
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
@@ -34,6 +45,18 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     response_description="The newly created user account.",
 )
 def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+    """Create a new user account.
+
+    Args:
+        user_data (schemas.UserCreate): User data for signup.
+        db (Session, optional): Database session dependency. Defaults to Depends(get_db).
+
+    Raises:
+        HTTPException: If the email is already registered.
+
+    Returns:
+        schemas.UserRead: The newly created user account.
+    """
     # Check if user already exists
     existing_user = (
         db.query(models.User).filter(models.User.email == user_data.email).first()
@@ -71,6 +94,19 @@ def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     response_description="Access token for the user.",
 )
 def login(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+    """Authenticate user and return access token.
+
+    Args:
+        user_data (schemas.UserCreate): User data for login, including email and password.
+        db (Session, optional): Database session dependency. Defaults to Depends(get_db).
+
+    Raises:
+        HTTPException: If the user does not exist or the password is incorrect.
+        HTTPException: If the credentials are invalid.
+
+    Returns:
+        dict: Mock access token for the user.
+    """
     user = db.query(models.User).filter(models.User.email == user_data.email).first()
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
