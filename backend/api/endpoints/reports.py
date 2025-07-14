@@ -13,8 +13,8 @@ router = APIRouter()
 # Create new report - POST /api/reports
 # --------------------------
 @router.post("/", response_model=schemas.Report, status_code=status.HTTP_201_CREATED)
-def create_report(db: Session = Depends(get_db)):
-    report = models.Report()
+def create_report(created_by: int, db: Session = Depends(get_db)):
+    report = models.Report(created_by=created_by)
     db.add(report)
     db.commit()
     db.refresh(report)

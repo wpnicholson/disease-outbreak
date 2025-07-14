@@ -31,7 +31,7 @@ class Reporter(ReporterBase):
     registration_date: datetime
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Patient Schemas
@@ -53,7 +53,7 @@ class Patient(PatientBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Disease Schemas
@@ -75,7 +75,7 @@ class Disease(DiseaseBase):
     id: int
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 # Report Schemas
@@ -97,7 +97,7 @@ class Report(ReportBase):
     disease: Optional[Disease]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class StatisticsSummary(BaseModel):
@@ -127,4 +127,4 @@ class UserRead(UserBase):
 
     # Enables SQLAlchemy ORM compatibility with Pydantic models.
     class Config:
-        orm_mode = True
+        from_attributes = True
