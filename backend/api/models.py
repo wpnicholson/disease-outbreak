@@ -64,7 +64,12 @@ class Reporter(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
-    reports: Mapped[List[Report]] = relationship("Report", back_populates="reporter")
+    reports: Mapped[List[Report]] = relationship(
+        "Report",
+        back_populates="reporter",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 
 class Patient(Base):
@@ -93,7 +98,9 @@ class Patient(Base):
     # Emergency contact (optional, max 200 chars).
     emergency_contact: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
 
-    report_id: Mapped[int] = mapped_column(ForeignKey("reports.id"), nullable=False)
+    report_id: Mapped[int] = mapped_column(
+        ForeignKey("reports.id", ondelete="CASCADE"), nullable=False
+    )
     report: Mapped[Report] = relationship("Report", back_populates="patient")
 
 
@@ -129,7 +136,9 @@ class Disease(Base):
         SqlEnum(TreatmentStatusEnum), nullable=False
     )
 
-    report_id: Mapped[int] = mapped_column(ForeignKey("reports.id"), nullable=False)
+    report_id: Mapped[int] = mapped_column(
+        ForeignKey("reports.id", ondelete="CASCADE"), nullable=False
+    )
     report: Mapped[Report] = relationship("Report", back_populates="disease")
 
 
@@ -149,19 +158,32 @@ class Report(Base):
         DateTime(timezone=True), onupdate=func.now()
     )
     # Moved to a separate User model.
-    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_by: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
     creator: Mapped[User] = relationship("User", back_populates="reports")
 
-    reporter_id: Mapped[Optional[int]] = mapped_column(ForeignKey("reporters.id"))
+    reporter_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("reporters.id", ondelete="CASCADE")
+    )
     reporter: Mapped[Optional[Reporter]] = relationship(
         "Reporter", back_populates="reports"
     )
 
     patient: Mapped[Optional[Patient]] = relationship(
-        "Patient", uselist=False, back_populates="report"
+        "Patient",
+        uselist=False,
+        back_populates="report",
+        cascade="all, delete-orphan",
+        single_parent=True,
     )
+
     disease: Mapped[Optional[Disease]] = relationship(
-        "Disease", uselist=False, back_populates="report"
+        "Disease",
+        uselist=False,
+        back_populates="report",
+        cascade="all, delete-orphan",
+        single_parent=True,
     )
 
 
@@ -192,7 +214,12 @@ class User(Base):
     )
 
     # Relationship to the Report created by this user.
-    reports: Mapped[List["Report"]] = relationship("Report", back_populates="creator")
+    reports: Mapped[List["Report"]] = relationship(
+        "Report",
+        back_populates="creator",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 
 class AuditLog(Base):
@@ -216,9 +243,7 @@ class AuditLog(Base):
     )  # e.g., Report, Patient
     entity_id: Mapped[int] = mapped_column(nullable=False)  # ID of the entity affected
 
-    changes: Mapped[Optional[dict]] = mapped_column(
-        JSON, nullable=True
-    )  # store change diffs (optional)
+    changes: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
     def __repr__(self):
         return f"<AuditLog(action={self.action}, entity={self.entity_type}, id={self.entity_id})>"
