@@ -48,18 +48,14 @@ format:
 serve:
 	$(DC) exec $(SERVICE) bash -c "cd /code && uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload"
 
-## Run tests (inside backend container)
+## Run tests (note: inside backend container)
 test:
 	$(DC) exec $(SERVICE) bash -c "cd /code && pytest tests"
 
-## Run tests from project root (basic)
-pytest-root:
-	pytest backend/tests
+## Run API tests with coverage report (note: inside backend container)
+test-cov:
+	$(DC) exec $(SERVICE) bash -c "cd /code && pytest --cov=api tests"
 
-## Run tests with coverage report
-pytest-cov:
-	pytest --cov=backend/api backend/tests
-
-## Run tests with verbose output
-pytest-verbose:
-	pytest -v backend/tests
+## Run API tests with verbose output (note: inside backend container)
+test-verbose:
+	$(DC) exec $(SERVICE) bash -c "cd /code && pytest -v tests"
