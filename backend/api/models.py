@@ -187,3 +187,32 @@ class User(Base):
 
     # Relationship to the Report created by this user.
     reports: Mapped[List["Report"]] = relationship("Report", back_populates="creator")
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    timestamp: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+    user_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("users.id"), nullable=True
+    )
+    user: Mapped[Optional[User]] = relationship("User")
+
+    action: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )  # e.g., CREATE, UPDATE, DELETE
+    entity_type: Mapped[str] = mapped_column(
+        String(50), nullable=False
+    )  # e.g., Report, Patient
+    entity_id: Mapped[int] = mapped_column(nullable=False)  # ID of the entity affected
+
+    changes: Mapped[Optional[dict]] = mapped_column(
+        JSON, nullable=True
+    )  # store change diffs (optional)
+
+    def __repr__(self):
+        return f"<AuditLog(action={self.action}, entity={self.entity_type}, id={self.entity_id})>"

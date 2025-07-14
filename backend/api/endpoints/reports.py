@@ -5,6 +5,7 @@ from typing import List
 from api import models, schemas
 from api.dependencies import get_db
 from api.enums import ReportStateEnum
+from api.audit_log import log_audit_event
 
 router = APIRouter()
 
@@ -18,6 +19,16 @@ def create_report(created_by: int, db: Session = Depends(get_db)):
     db.add(report)
     db.commit()
     db.refresh(report)
+
+    log_audit_event(
+        db=db,
+        user_id=created_by,
+        action="CREATE",
+        entity_type="Report",
+        entity_id=report.id,
+        changes=None,
+    )
+
     return report
 
 
