@@ -19,7 +19,7 @@ def seed():
         db.refresh(user)
 
     create_sample_data(db, user.id)
-    print("✅ Sample data seeded successfully.")
+    print("Sample data seeded successfully.")
     db.close()
 
 
