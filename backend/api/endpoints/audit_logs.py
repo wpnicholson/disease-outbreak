@@ -13,7 +13,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from api import models, schemas
-from api.dependencies import get_db
+from api.dependencies import get_db, senior_required
 
 router = APIRouter()
 
@@ -32,6 +32,7 @@ def get_audit_logs(
     skip: int = 0,
     limit: int = 20,
     db: Session = Depends(get_db),
+    _: models.User = Depends(senior_required),
 ):
     """Fetch audit logs with optional date filtering and pagination.
 
@@ -52,7 +53,6 @@ def get_audit_logs(
     if end_date:
         query = query.filter(models.AuditLog.timestamp <= end_date)
 
-    logs = (
+    return (
         query.order_by(models.AuditLog.timestamp.desc()).offset(skip).limit(limit).all()
     )
-    return logs

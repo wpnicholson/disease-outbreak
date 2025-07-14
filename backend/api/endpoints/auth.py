@@ -9,23 +9,64 @@ Returns:
     dict: Mock access token for the user.
 """
 
+from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
 from api import models, schemas
 from api.dependencies import get_db
+from api.enums import UserRoleEnum
+
+from jose import jwt
 
 router = APIRouter()
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+SECRET_KEY = "your_secret_here"
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60
+
+
+def create_access_token(data: dict, expires_delta: timedelta | None = None):
+    """Create a JWT access token.
+
+    Args:
+        data (dict): Data to encode in the token.
+        expires_delta (timedelta | None, optional): Expiration time for the token. Defaults to None.
+
+    Returns:
+        str: Encoded JWT token.
+    """
+    to_encode = data.copy()
+    expire = datetime.now() + (expires_delta or timedelta(minutes=15))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
 
 def hash_password(password: str) -> str:
+    """Hash a password using bcrypt.
+
+    Args:
+        password (str): The password to hash.
+
+    Returns:
+        str: Hashed password.
+    """
     return pwd_context.hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a plain password against a hashed password.
+
+    Args:
+        plain_password (str): plain password to verify.
+        hashed_password (str): Hashed password to compare against.
+
+    Returns:
+        bool: True if the password matches, False otherwise.
+    """
     return pwd_context.verify(plain_password, hashed_password)
 
 
@@ -64,14 +105,16 @@ def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     if existing_user:
         raise HTTPException(status_code=400, detail="Email already registered")
 
-    # Hash password
+    # Hash password.
     hashed_pw = hash_password(user_data.password)
 
-    # Create user
+    # Create user.
     new_user = models.User(
         email=user_data.email,
         hashed_password=hashed_pw,
         full_name=user_data.full_name,
+        role=user_data.role
+        or UserRoleEnum.junior,  # Default to junior role if not provided.
     )
     db.add(new_user)
     db.commit()
@@ -108,11 +151,12 @@ def login(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
         dict: Mock access token for the user.
     """
     user = db.query(models.User).filter(models.User.email == user_data.email).first()
-    if not user:
+    if not user or not verify_password(user_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    if not verify_password(user_data.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    access_token = create_access_token(
+        data={"sub": user.email, "role": user.role.value},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
+    )
 
-    # Note: Replace this with real JWT token logic
-    return {"access_token": f"mock-token-for-{user.email}", "token_type": "bearer"}
+    return {"access_token": access_token, "token_type": "bearer"}
