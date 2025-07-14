@@ -64,11 +64,30 @@ def test_get_specific_report():
     assert response.json()["id"] == report_id
 
 
+def test_get_nonexistent_report():
+    response = client.get("/api/reports/999999")
+    assert response.status_code == 404
+
+
 def test_update_report_status():
     report_id = create_report()
     update_resp = client.put(f"/api/reports/{report_id}", json={"status": "Submitted"})
     assert update_resp.status_code == 200
     assert update_resp.json()["status"] == "Submitted"
+
+
+def test_update_nonexistent_report():
+    response = client.put("/api/reports/999999", json={"status": "Submitted"})
+    assert response.status_code == 404
+
+
+def test_update_non_draft_report():
+    report_id = create_report()
+    # First, submit the report
+    client.put(f"/api/reports/{report_id}", json={"status": "Submitted"})
+    # Then, try to update it again
+    response = client.put(f"/api/reports/{report_id}", json={"status": "Draft"})
+    assert response.status_code == 400
 
 
 def test_delete_report():
@@ -79,3 +98,41 @@ def test_delete_report():
     # Ensure report is actually deleted
     get_resp = client.get(f"/api/reports/{report_id}")
     assert get_resp.status_code == 404
+
+
+def test_delete_nonexistent_report():
+    response = client.delete("/api/reports/999999")
+    assert response.status_code == 404
+
+
+def test_delete_non_draft_report():
+    report_id = create_report()
+    client.put(f"/api/reports/{report_id}", json={"status": "Submitted"})
+    response = client.delete(f"/api/reports/{report_id}")
+    assert response.status_code == 400
+
+
+def test_submit_report_without_required_links():
+    report_id = create_report()
+    response = client.post(f"/api/reports/{report_id}/submit")
+    assert response.status_code == 400
+    assert "Ensure reporter, patient, and disease are set" in response.json()["detail"]
+
+
+def test_submit_nonexistent_report():
+    response = client.post("/api/reports/999999/submit")
+    assert response.status_code == 404
+
+
+def test_submit_non_draft_report():
+    report_id = create_report()
+    client.put(f"/api/reports/{report_id}", json={"status": "Submitted"})
+    response = client.post(f"/api/reports/{report_id}/submit")
+    assert response.status_code == 400
+
+
+def test_get_recent_reports():
+    response = client.get("/api/reports/recent")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, list)

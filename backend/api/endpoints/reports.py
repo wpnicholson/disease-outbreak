@@ -60,6 +60,27 @@ def list_reports(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
 
 
 # --------------------------
+# Get recent submitted reports (most recent 10)
+# --------------------------
+@router.get(
+    "/recent",
+    response_model=List[schemas.Report],
+    summary="Get recent reports",
+    description="Retrieve the most recent 10 submitted reports.",
+    response_description="List of recent reports",
+)
+def get_recent_reports(db: Session = Depends(get_db)):
+    recent = (
+        db.query(models.Report)
+        .filter(models.Report.status == ReportStateEnum.submitted)
+        .order_by(models.Report.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    return recent
+
+
+# --------------------------
 # Get a specific report by ID - GET /api/reports/{report_id}
 # --------------------------
 @router.get(
@@ -180,24 +201,3 @@ def submit_report(report_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(report)
     return {"message": "Report submitted successfully", "report_id": report.id}
-
-
-# --------------------------
-# Get recent submitted reports (most recent 10)
-# --------------------------
-@router.get(
-    "/recent",
-    response_model=List[schemas.Report],
-    summary="Get recent reports",
-    description="Retrieve the most recent 10 submitted reports.",
-    response_description="List of recent reports",
-)
-def get_recent_reports(db: Session = Depends(get_db)):
-    recent = (
-        db.query(models.Report)
-        .filter(models.Report.status == ReportStateEnum.submitted)
-        .order_by(models.Report.created_at.desc())
-        .limit(10)
-        .all()
-    )
-    return recent
