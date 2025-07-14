@@ -12,9 +12,9 @@ from api.enums import UserRoleEnum
 def senior_token():
     db = SessionLocal()
     senior_user = User(
-        email="senior@example.com",
+        email="senior_test_user@example.com",
         hashed_password="not_validated_for_test",
-        full_name="Senior User",
+        full_name="Example senior User",
         role=UserRoleEnum.senior,
     )
     db.add(senior_user)
@@ -24,14 +24,20 @@ def senior_token():
     token = create_access_token(
         {"sub": senior_user.email, "role": senior_user.role.value}
     )
+
+    yield token
+
+    db.delete(senior_user)
+    db.commit()
     db.close()
-    return token
 
 
 @pytest.fixture(scope="module", autouse=True)
 def setup_audit_log_test_data():
     db = SessionLocal()
     now = datetime.now(timezone.utc)
+    logs = []
+
     for i in range(5):
         log = AuditLog(
             timestamp=now - timedelta(days=i),
@@ -42,9 +48,17 @@ def setup_audit_log_test_data():
             changes={"field": f"change_{i}"},
         )
         db.add(log)
+        logs.append(log)
+
+    db.commit()
+
+    yield
+
+    for log in logs:
+        db.delete(log)
+
     db.commit()
     db.close()
-    yield
 
 
 def test_get_audit_logs_basic(client, senior_token):
