@@ -78,7 +78,8 @@ def create_sample_data(db: Session, user_id: int):
     # ---------------------------
     today = date.today()
     patients = []
-    for idx in range(10):
+    # Assign exactly one patient per report
+    for idx, report in enumerate(reports):
         patient = models.Patient(
             first_name=f"Patient{idx}",
             last_name=f"Lastname{idx}",
@@ -87,7 +88,7 @@ def create_sample_data(db: Session, user_id: int):
             medical_record_number=f"MRN-{idx}",
             patient_address=f"{idx} Some Street, City",
             emergency_contact=f"Emergency Contact {idx}",
-            report_id=reports[idx % len(reports)].id,
+            report_id=report.id,
         )
         db.add(patient)
         patients.append(patient)
