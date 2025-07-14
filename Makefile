@@ -63,3 +63,7 @@ test-cov:
 ## Run API tests with verbose output (note: inside backend container)
 test-verbose:
 	$(DC) exec $(SERVICE) bash -c "cd /code && pytest -v tests"
+
+## Seed database with sample data
+seed:
+	$(DC) exec $(SERVICE) bash -c "cd /code && python seed_data.py"
