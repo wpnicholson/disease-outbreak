@@ -44,6 +44,16 @@ quick-migrate:
 wait-db:
 	$(DC) exec $(SERVICE) /wait-for-it.sh db:5432 --timeout=60 --strict -- echo "Database is up!"
 
+## Reset and rebuild the entire environment, including migrations
+reset-rebuild:
+	$(DC) down --volumes --remove-orphans
+	docker system prune -a --volumes -f
+	$(DC) build
+	$(DC) up -d
+	$(DC) exec $(SERVICE) /wait-for-it.sh db:5432 --timeout=60 --strict -- echo "Database is ready!"
+	$(DC) exec $(SERVICE) bash -c "cd /code && alembic revision --autogenerate -m '$(message)'"
+	$(DC) exec $(SERVICE) bash -c "cd /code && alembic upgrade head"
+
 ## Lint with flake8
 lint:
 	$(DC) exec $(SERVICE) bash -c "cd /code && flake8 ."
