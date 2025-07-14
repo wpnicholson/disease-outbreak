@@ -15,6 +15,7 @@ reset:
 ## Start all services in the background
 up:
 	$(DC) up -d
+	$(DC) exec $(SERVICE) /wait-for-it.sh db:5432 --timeout=60 --strict -- echo "Database is ready!"
 
 ## Stop all services
 down:
@@ -38,7 +39,8 @@ upgrade:
 
 ## Create and apply migration in one step (not recommended for production)
 quick-migrate:
-	$(DC) exec $(SERVICE) bash -c "cd /code && alembic revision --autogenerate -m '$(message)' && alembic upgrade head"
+	$(MAKE) migrate message="$(message)"
+	$(MAKE) upgrade
 
 ## Wait for database to be ready before starting services
 wait-db:
@@ -46,13 +48,11 @@ wait-db:
 
 ## Reset and rebuild the entire environment, including migrations
 reset-rebuild:
-	$(DC) down --volumes --remove-orphans
-	docker system prune -a --volumes -f
-	$(DC) build
-	$(DC) up -d
-	$(DC) exec $(SERVICE) /wait-for-it.sh db:5432 --timeout=60 --strict -- echo "Database is ready!"
-	$(DC) exec $(SERVICE) bash -c "cd /code && alembic revision --autogenerate -m '$(message)'"
-	$(DC) exec $(SERVICE) bash -c "cd /code && alembic upgrade head"
+	$(MAKE) reset
+	$(MAKE) build
+	$(MAKE) up
+	$(MAKE) upgrade
+	$(MAKE) quick-migrate message="$(message)"
 
 ## Lint with flake8
 lint:

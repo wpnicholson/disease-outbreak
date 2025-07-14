@@ -1,8 +1,8 @@
-"""Taking advantage of Pydantic Config class and Swagger UI docs
+"""initial migration
 
-Revision ID: c99e6c9a75ca
-Revises: 74053c96184a
-Create Date: 2025-07-14 05:03:59.867729
+Revision ID: 8a2b41748160
+Revises: 
+Create Date: 2025-07-14 17:43:45.632427
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'c99e6c9a75ca'
-down_revision: Union[str, Sequence[str], None] = '74053c96184a'
+revision: str = '8a2b41748160'
+down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -43,6 +43,7 @@ def upgrade() -> None:
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('role', sa.Enum('junior', 'senior', name='userroleenum'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
