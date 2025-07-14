@@ -20,6 +20,12 @@ router = APIRouter()
     summary="Create a new report",
     description="Create a new report with the given details. The report will be in 'Draft' status initially.",
     response_description="Report created successfully",
+    responses={
+        400: {
+            "description": "Invalid request data",
+            "content": {"application/json": {"example": {"detail": "Bad Request"}}},
+        }
+    },
 )
 def create_report(created_by: int, db: Session = Depends(get_db)):
     report = models.Report(created_by=created_by)
@@ -62,6 +68,12 @@ def list_reports(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
     summary="Get report by ID",
     description="Retrieve a specific report by its ID.",
     response_description="Report details",
+    responses={
+        404: {
+            "description": "Report not found",
+            "content": {"application/json": {"example": {"detail": "Not Found"}}},
+        }
+    },
 )
 def get_report(report_id: int, db: Session = Depends(get_db)):
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
@@ -79,6 +91,16 @@ def get_report(report_id: int, db: Session = Depends(get_db)):
     summary="Update report",
     description="Update a report's details. Only reports with 'Draft' status can be updated.",
     response_description="Updated report details",
+    responses={
+        404: {
+            "description": "Report not found",
+            "content": {"application/json": {"example": {"detail": "Not Found"}}},
+        },
+        400: {
+            "description": "Invalid request data or report state",
+            "content": {"application/json": {"example": {"detail": "Bad Request"}}},
+        },
+    },
 )
 def update_report(
     report_id: int, updated_data: schemas.ReportCreate, db: Session = Depends(get_db)
@@ -104,6 +126,16 @@ def update_report(
     summary="Delete report",
     description="Delete a report by its ID. Only reports with 'Draft' status can be deleted.",
     response_description="Report deleted successfully",
+    responses={
+        404: {
+            "description": "Report not found",
+            "content": {"application/json": {"example": {"detail": "Not Found"}}},
+        },
+        400: {
+            "description": "Only draft reports can be deleted",
+            "content": {"application/json": {"example": {"detail": "Bad Request"}}},
+        },
+    },
 )
 def delete_report(report_id: int, db: Session = Depends(get_db)):
     report = db.query(models.Report).filter(models.Report.id == report_id).first()

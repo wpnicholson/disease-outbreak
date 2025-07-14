@@ -18,6 +18,12 @@ router = APIRouter()
     summary="Get patient details for a report",
     description="Retrieves the patient details associated with a specific report.",
     response_description="Patient details.",
+    responses={
+        404: {
+            "description": "Report not found or patient not associated with report",
+            "content": {"application/json": {"example": {"detail": "Not Found"}}},
+        }
+    },
 )
 def get_patient(report_id: int, db: Session = Depends(get_db)):
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
@@ -41,6 +47,16 @@ def get_patient(report_id: int, db: Session = Depends(get_db)):
     description="Adds or updates the patient details associated with a specific report. "
     "This can only be done if the report is in draft state and has a reporter set.",
     response_description="Patient details after upsert.",
+    responses={
+        404: {
+            "description": "Report not found",
+            "content": {"application/json": {"example": {"detail": "Not Found"}}},
+        },
+        400: {
+            "description": "Invalid request data or report state",
+            "content": {"application/json": {"example": {"detail": "Bad Request"}}},
+        },
+    },
 )
 def upsert_patient(
     report_id: int, patient_data: schemas.PatientCreate, db: Session = Depends(get_db)

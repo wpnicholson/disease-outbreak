@@ -25,6 +25,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     "/signup",
     response_model=schemas.UserRead,
     status_code=status.HTTP_201_CREATED,
+    responses={
+        201: {"description": "User successfully created"},
+        400: {"description": "Email already registered"},
+    },
     summary="User Signup",
     description="Create a new user account.",
     response_description="The newly created user account.",
@@ -58,6 +62,10 @@ def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
 # -------------------------------
 @router.post(
     "/login",
+    responses={
+        200: {"description": "User successfully logged in"},
+        401: {"description": "Invalid credentials"},
+    },
     summary="User Login",
     description="Authenticate user and return access token.",
     response_description="Access token for the user.",

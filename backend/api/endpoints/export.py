@@ -15,6 +15,16 @@ router = APIRouter()
     summary="Export reports in specified format",
     description="Exports all reports in the specified format (JSON or CSV).",
     response_description="Exported report data.",
+    responses={
+        400: {
+            "description": "Invalid format specified",
+            "content": {
+                "application/json": {
+                    "example": {"detail": "Format must be 'json' or 'csv'"}
+                }
+            },
+        }
+    },
 )
 def export_reports(format: str, db: Session = Depends(get_db)):
     if format.lower() not in {"json", "csv"}:

@@ -15,6 +15,7 @@ router = APIRouter()
     summary="Get audit logs",
     description="Fetches audit logs with optional date filtering and pagination.",
     response_description="List of audit logs.",
+    responses={200: {"description": "Successful response"}},
 )
 def get_audit_logs(
     start_date: Optional[datetime] = Query(None),

@@ -18,6 +18,12 @@ router = APIRouter()
     summary="Get disease for report",
     description="Fetches the disease associated with a specific report.",
     response_description="Disease details associated with the report.",
+    responses={
+        404: {
+            "description": "Report not found or disease not associated with report",
+            "content": {"application/json": {"example": {"detail": "Not Found"}}},
+        }
+    },
 )
 def get_disease(report_id: int, db: Session = Depends(get_db)):
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
@@ -40,6 +46,16 @@ def get_disease(report_id: int, db: Session = Depends(get_db)):
     summary="Add or update disease for report",
     description="Adds or updates the disease associated with a specific report.",
     response_description="Disease details after adding or updating.",
+    responses={
+        404: {
+            "description": "Report not found",
+            "content": {"application/json": {"example": {"detail": "Not Found"}}},
+        },
+        400: {
+            "description": "Invalid request data or report state",
+            "content": {"application/json": {"example": {"detail": "Bad Request"}}},
+        },
+    },
 )
 def upsert_disease(
     report_id: int, disease_data: schemas.DiseaseCreate, db: Session = Depends(get_db)
@@ -94,6 +110,14 @@ def upsert_disease(
     summary="Get disease categories",
     description="Fetches all disease categories defined in the system.",
     response_description="List of disease categories.",
+    responses={
+        200: {
+            "description": "List of disease categories",
+            "content": {
+                "application/json": {"example": ["Infectious", "Genetic", "Chronic"]}
+            },
+        }
+    },
 )
 def get_disease_categories():
     return [category.value for category in DiseaseCategoryEnum]

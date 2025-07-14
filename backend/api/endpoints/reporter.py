@@ -17,6 +17,12 @@ router = APIRouter()
     summary="Get reporter for a report",
     description="Retrieve the reporter associated with a specific report by its ID.",
     response_description="Reporter details",
+    responses={
+        404: {
+            "description": "Report not found or reporter not associated with report",
+            "content": {"application/json": {"example": {"detail": "Not Found"}}},
+        }
+    },
 )
 def get_reporter(report_id: int, db: Session = Depends(get_db)):
     report = db.query(models.Report).filter(models.Report.id == report_id).first()
@@ -39,6 +45,16 @@ def get_reporter(report_id: int, db: Session = Depends(get_db)):
     summary="Add or update reporter for a report",
     description="Add a new reporter or update an existing reporter associated with a specific report by its ID.",
     response_description="Reporter details",
+    responses={
+        404: {
+            "description": "Report not found",
+            "content": {"application/json": {"example": {"detail": "Not Found"}}},
+        },
+        400: {
+            "description": "Invalid request data or report state",
+            "content": {"application/json": {"example": {"detail": "Bad Request"}}},
+        },
+    },
 )
 def upsert_reporter(
     report_id: int, reporter_data: schemas.ReporterCreate, db: Session = Depends(get_db)
