@@ -40,6 +40,10 @@ upgrade:
 quick-migrate:
 	$(DC) exec $(SERVICE) bash -c "cd /code && alembic revision --autogenerate -m '$(message)' && alembic upgrade head"
 
+## Wait for database to be ready before starting services
+wait-db:
+	$(DC) exec $(SERVICE) /wait-for-it.sh db:5432 --timeout=60 --strict -- echo "Database is up!"
+
 ## Lint with flake8
 lint:
 	$(DC) exec $(SERVICE) bash -c "cd /code && flake8 ."
