@@ -40,3 +40,8 @@ class ReportStateEnum(str, enum.Enum):
     submitted = "Submitted"
     under_review = "Under Review"
     approved = "Approved"
+
+
+class UserRoleEnum(str, enum.Enum):
+    junior = "Junior"
+    senior = "Senior"

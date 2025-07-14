@@ -24,6 +24,7 @@ from api.enums import (
     SeverityLevelEnum,
     TreatmentStatusEnum,
     ReportStateEnum,
+    UserRoleEnum,
 )
 
 
@@ -183,6 +184,11 @@ class User(Base):
     )
     updated_at: Mapped[Optional[datetime]] = mapped_column(
         DateTime(timezone=True), onupdate=func.now()
+    )
+
+    # models.py
+    role: Mapped[UserRoleEnum] = mapped_column(
+        SqlEnum(UserRoleEnum), nullable=False, default=UserRoleEnum.junior
     )
 
     # Relationship to the Report created by this user.
