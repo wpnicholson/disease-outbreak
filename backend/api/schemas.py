@@ -8,6 +8,7 @@ from api.enums import (
     SeverityLevelEnum,
     TreatmentStatusEnum,
     ReportStateEnum,
+    UserRoleEnum,
 )
 
 
@@ -157,6 +158,7 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8, max_length=128)
+    role: UserRoleEnum = Field(default=UserRoleEnum.junior)
 
     class Config:
         json_schema_extra = {
@@ -165,6 +167,7 @@ class UserCreate(UserBase):
                 "hashed_password": "hashed_password_here",
                 "full_name": "Bob Smith",
                 "is_active": True,
+                "role": UserRoleEnum.junior,
             }
         }
 
