@@ -36,6 +36,10 @@ migrate:
 upgrade:
 	$(DC) exec $(SERVICE) bash -c "cd /code && alembic upgrade head"
 
+## Create and apply migration in one step (not recommended for production)
+quick-migrate:
+	$(DC) exec $(SERVICE) bash -c "cd /code && alembic revision --autogenerate -m '$(message)' && alembic upgrade head"
+
 ## Lint with flake8
 lint:
 	$(DC) exec $(SERVICE) bash -c "cd /code && flake8 ."
