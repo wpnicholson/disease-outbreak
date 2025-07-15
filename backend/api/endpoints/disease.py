@@ -179,7 +179,7 @@ def create_or_update_disease(
     "/{report_id}/disease",
     response_model=dict,
     summary="Remove disease from report",
-    status_code=status.HTTP_204_NO_CONTENT,
+    status_code=status.HTTP_200_OK,
     description="Remove disease details from a report. Only possible if report is in draft state.",
     response_description="Disease removed successfully.",
     responses={
