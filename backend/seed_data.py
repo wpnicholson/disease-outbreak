@@ -5,9 +5,11 @@ from api.models import User
 from api.enums import UserRoleEnum
 from api.endpoints.auth import hash_password
 from dotenv import load_dotenv
+import uuid
 
 
 def seed():
+    unique_str = str(uuid.uuid4())
     load_dotenv()
 
     junior_password: str | None = os.getenv("JUNIOR_PASSWORD")
@@ -21,7 +23,7 @@ def seed():
     db = SessionLocal()
 
     # Seed junior user
-    junior_email = "junior@example.com"
+    junior_email = f"junior-{unique_str}@example.com"
     junior_user = db.query(User).filter(User.email == junior_email).first()
     if not junior_user:
         junior_user = User(
@@ -36,7 +38,7 @@ def seed():
         print(f"Created junior user: {junior_email}")
 
     # Seed senior user
-    senior_email = "senior@example.com"
+    senior_email = f"senior-{unique_str}@example.com"
     senior_user = db.query(User).filter(User.email == senior_email).first()
     if not senior_user:
         senior_user = User(
