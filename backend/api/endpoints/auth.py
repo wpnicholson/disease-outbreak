@@ -88,7 +88,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def signup(user_data: schemas.UserSignup, db: Session = Depends(get_db)):
     """Create a new user account.
 
-    All fields are required. The `role` defaults to `junior` if not provided.
+    All fields except `role` are required to signup.
+
+    The `role` defaults to `junior` if not provided.
 
     Args:
         user_data (schemas.UserSignup): User data for signup.
