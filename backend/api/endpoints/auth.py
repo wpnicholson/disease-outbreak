@@ -159,4 +159,10 @@ def login(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES),
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    user_read = schemas.UserRead.model_validate(user)
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user": user_read.model_dump_json(exclude={"hashed_password"}),
+    }

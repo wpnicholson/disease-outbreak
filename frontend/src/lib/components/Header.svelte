@@ -33,6 +33,22 @@
 					}`}>Home</a
 				>
 				<a
+					href="/dashboard/audit-logs"
+					class={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${
+						page.url.pathname === '/dashboard/audit-logs'
+							? 'border-highlight text-gray-900'
+							: 'border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-800'
+					}`}>Audit</a
+				>
+				<a
+					href="/dashboard/statistics"
+					class={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${
+						page.url.pathname === '/dashboard/statistics'
+							? 'border-highlight text-gray-900'
+							: 'border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-800'
+					}`}>Statistics</a
+				>
+				<a
 					href="/dashboard/reporter"
 					class={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${
 						page.url.pathname === '/dashboard/reporter'

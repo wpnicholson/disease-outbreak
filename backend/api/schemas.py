@@ -41,8 +41,14 @@ class Reporter(ReporterBase):
     id: int
     registration_date: datetime
 
+    model_config = {"from_attributes": True}
+
+
+class ReportPatientLink(BaseModel):
+    patient_ids: List[int]
+
     class Config:
-        from_attributes = True
+        json_schema_extra = {"example": {"patient_ids": [1, 2, 3]}}
 
 
 # Patient Schemas
@@ -67,7 +73,6 @@ class PatientCreate(PatientBase):
                 "medical_record_number": "MRN123456",
                 "patient_address": "456 Health Ave, Wellness City",
                 "emergency_contact": "Jane Doe, +1234567890",
-                "report_id": 1,
             }
         }
 
@@ -75,8 +80,7 @@ class PatientCreate(PatientBase):
 class Patient(PatientBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 # Disease Schemas
@@ -108,8 +112,7 @@ class DiseaseCreate(DiseaseBase):
 class Disease(DiseaseBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 # Report Schemas
@@ -134,11 +137,10 @@ class Report(ReportBase):
     updated_at: Optional[datetime]
 
     reporter: Optional[Reporter]
-    patient: Optional[Patient]
+    patient: List[Patient] = []
     disease: Optional[Disease]
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class StatisticsSummary(BaseModel):
@@ -151,6 +153,12 @@ class StatisticsSummary(BaseModel):
 
 
 class UserBase(BaseModel):
+    """Base model for user data.
+
+    Args:
+        BaseModel (BaseModel): Pydantic base model for data validation.
+    """
+
     email: EmailStr
     full_name: Optional[str] = Field(None, max_length=100)
 
@@ -163,9 +171,8 @@ class UserCreate(UserBase):
         json_schema_extra = {
             "example": {
                 "email": "bob.smith@example.com",
-                "hashed_password": "hashed_password_here",
+                "password": "plaintext_password_here",
                 "full_name": "Bob Smith",
-                "is_active": True,
                 "role": UserRoleEnum.junior,
             }
         }
@@ -178,9 +185,7 @@ class UserRead(UserBase):
     created_at: datetime
     updated_at: Optional[datetime]
 
-    # Enables SQLAlchemy ORM compatibility with Pydantic models.
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class AuditLog(BaseModel):
@@ -192,5 +197,4 @@ class AuditLog(BaseModel):
     entity_id: int
     changes: Optional[dict]
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}

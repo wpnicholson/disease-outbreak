@@ -94,7 +94,7 @@ def upsert_patient(
     if existing_patient:
         report.patient = existing_patient
     else:
-        new_patient = models.Patient(**patient_data.dict())
+        new_patient = models.Patient(**patient_data.model_dump())
         report.patient = new_patient
         db.add(new_patient)
 
