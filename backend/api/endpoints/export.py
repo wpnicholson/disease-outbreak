@@ -33,7 +33,9 @@ def export_reports(format: str, db: Session = Depends(get_db)):
     reports = db.query(models.Report).all()
 
     if format.lower() == "json":
-        data = [schemas.Report.from_orm(r).dict() for r in reports]
+        data = [
+            schemas.Report.model_validate(r).model_dump(mode="json") for r in reports
+        ]
         return JSONResponse(content=data)
 
     # CSV format
