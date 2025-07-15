@@ -34,7 +34,12 @@ class Base(DeclarativeBase):
     pass
 
 
-# Association table for many-to-many Patient <-> Report relationship
+# Association table for many-to-many Patient <-> Report relationship.
+# When a Patient is deleted, the corresponding links in `patient_reports` are also removed.
+# When a Report is deleted, links in `patient_reports` are removed.
+# NOTE: The patient record itself is not deleted when a report is deleted, and vice versa.
+#     : Only the association is cleaned up.
+# Primary keys: Composite primary key (`patient_id`, `report_id`) ensures unique pairs (no duplicate links).
 patient_reports = Table(
     "patient_reports",
     Base.metadata,
@@ -60,12 +65,14 @@ class Reporter(Base):
         DateTime(timezone=True), server_default=func.now()
     )
 
-    # Enables ORM-level access to all Report instances associated with this Reporter (one-to-many relationship).
-    # So basically a Reporter instance can load all their Reports via `reporter.reports`.
-    # Deleting a Reporter triggers a database-level cascade (`ondelete="CASCADE"`), which deletes all their associated Report instances.
-    # This relationship also uses ORM-level cascading (`cascade="all, delete-orphan"`), which means that removing a Report
-    # from `reporter.reports` will mark it for deletion from the database.
-    # The cascade is unidirectional: so deleting a Report does not affect the Reporter (no upstream cascade).
+    # Relationship: One-to-Many.
+    # Direction:
+    #  - One `Reporter` → Many `Reports`.
+    #  - `Report.reporter_id` is optional so that we can create blank draft reports.
+    # Deletion Behaviour:
+    #  - Deleting a `Reporter` cascades to **delete all their `Reports`** via `ondelete="CASCADE"`.
+    #  - Deleting a `Report` does not affect the `Reporter`.
+    #  - ORM-level: Removing a report from `reporter.reports` triggers `delete-orphan` (deletes the report).
     reports: Mapped[List[Report]] = relationship(
         "Report",
         back_populates="reporter",
@@ -86,8 +93,7 @@ class Patient(Base):
     patient_address: Mapped[str] = mapped_column(String(500), nullable=False)
     emergency_contact: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
 
-    # Enables ORM-level access to the associated Report instance.
-    # Setting `patient.report = X` will automatically update `X.patient` via bidirectional relationship synchronization.
+    # This allows you to navigate from a Patient to all their Reports. And vice versa.
     reports: Mapped[List[Report]] = relationship(
         "Report",
         secondary=patient_reports,
@@ -159,28 +165,30 @@ class Report(Base):
         "Reporter", back_populates="reports"
     )
 
-    # Deleting a Report will also delete all associated Patient instances (ORM cascade delete from Report downstream to Patients).
-    # You cannot delete a Patient independently at the database level because `report_id` is `nullable=False`.
-    # To remove a Patient, either:
-    #   - delete the Patient instance explicitly via the ORM session, or
-    #   - delete the associated Report to cascade-delete all its Patients.
-    patient: Mapped[List[Patient]] = relationship(
+    # Relationship: Many-to-Many (via `patient_reports` association table).
+    # Direction:
+    #   - One `Report` -> Many `Patients` (since many patients can have the same disease).
+    #   - One `Patient` -> Many `Reports` (since a single patient can have multiple diseases).
+    # Deletion Behaviour:
+    #   - Deleting a `Report` removes the link in `patient_reports` but does not delete `Patient` records.
+    #   - Deleting a `Patient` removes links in `patient_reports`, other associated reports remain unaffected.
+    #   - Cascade on association table only, not on the patient entity itself (no accidental data loss).
+    patients: Mapped[List[Patient]] = relationship(
         "Patient",
         secondary=patient_reports,
         back_populates="reports",
     )
 
-    # Each Report is associated with exactly one Disease instance (One-to-One relationship, enforced via `uselist=False`).
-    # Deleting a Report will also delete the associated Disease (ORM cascade delete from Report downstream to Disease).
-    # The `single_parent=True` setting ensures a Disease instance can only be attached to one Report at a time,
-    # preventing accidental sharing across multiple Reports.
-    # You cannot delete a Disease independently via the database because `report_id` is `nullable=False`;
-    # you must either:
-    #   - remove the association via `report.disease = None` (triggers delete-orphan), or
-    #   - delete the Report to cascade-delete the Disease.
+    # Relationship: One-to-One.
+    # Direction:
+    #   - One `Report` -> One `Disease` (a report is made in response to a disease outbreak).
+    # Deletion Behaviour:
+    #   - Deleting a `Report` cascades to delete the associated `Disease` via `ondelete="CASCADE"` and `delete-orphan`.
+    #   - Deleting a `Disease` directly is disallowed due to `report_id` being non-nullable.
+    #   - `single_parent=True` ensures a `Disease` can only belong to one `Report`.
     disease: Mapped[Optional[Disease]] = relationship(
         "Disease",
-        uselist=False,  # Ordinarily would be Many-to-One, but here we enforce One-to-One.
+        uselist=False,  # One-to-One enforcement.
         back_populates="report",
         cascade="all, delete-orphan",
         single_parent=True,

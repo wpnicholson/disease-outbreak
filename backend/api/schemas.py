@@ -44,7 +44,7 @@ class Reporter(ReporterBase):
     model_config = {"from_attributes": True}
 
 
-class ReportPatientLink(BaseModel):
+class ReportPatientsLink(BaseModel):
     patient_ids: List[int]
 
     class Config:
@@ -127,6 +127,8 @@ class ReportCreate(ReportBase):
                 "status": ReportStateEnum.draft,
                 "created_by": 1,
                 "reporter_id": 1,
+                "disease_id": 1,
+                "patients": [1, 2, 3],
             }
         }
 
@@ -137,7 +139,7 @@ class Report(ReportBase):
     updated_at: Optional[datetime]
 
     reporter: Optional[Reporter]
-    patient: List[Patient] = []
+    patients: List[Patient] = []
     disease: Optional[Disease]
 
     model_config = {"from_attributes": True}
