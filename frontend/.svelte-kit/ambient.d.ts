@@ -57,6 +57,7 @@ declare module '$env/static/private' {
 	export const HOMEDRIVE: string;
 	export const HOMEPATH: string;
 	export const INIT_CWD: string;
+	export const JUNIOR_PASSWORD: string;
 	export const LANG: string;
 	export const LOCALAPPDATA: string;
 	export const LOGONSERVER: string;
@@ -102,6 +103,7 @@ declare module '$env/static/private' {
 	export const PUBLIC: string;
 	export const PYDEVD_DISABLE_FILE_VALIDATION: string;
 	export const PYTHON_BASIC_REPL: string;
+	export const SENIOR_PASSWORD: string;
 	export const SESSIONNAME: string;
 	export const SystemDrive: string;
 	export const SystemRoot: string;
@@ -186,6 +188,7 @@ declare module '$env/dynamic/private' {
 		HOMEDRIVE: string;
 		HOMEPATH: string;
 		INIT_CWD: string;
+		JUNIOR_PASSWORD: string;
 		LANG: string;
 		LOCALAPPDATA: string;
 		LOGONSERVER: string;
@@ -231,6 +234,7 @@ declare module '$env/dynamic/private' {
 		PUBLIC: string;
 		PYDEVD_DISABLE_FILE_VALIDATION: string;
 		PYTHON_BASIC_REPL: string;
+		SENIOR_PASSWORD: string;
 		SESSIONNAME: string;
 		SystemDrive: string;
 		SystemRoot: string;
