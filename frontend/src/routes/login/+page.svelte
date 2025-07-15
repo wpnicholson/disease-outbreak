@@ -1,6 +1,9 @@
 <script lang="ts">
 	import LoginPage from '$lib/components/LoginPage.svelte';
 	import { enhance } from '$app/forms';
+	import type { PageProps } from './$types';
+
+	let { form }: PageProps = $props();
 </script>
 
 <div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
@@ -12,7 +15,7 @@
 
 	<div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
 		<form class="space-y-6" method="POST" use:enhance action="?/login">
-			<LoginPage />
+			<LoginPage {form} />
 		</form>
 	</div>
 </div>
