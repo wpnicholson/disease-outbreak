@@ -1,85 +1,67 @@
-import pytest
 from datetime import datetime, timedelta, timezone
 from api.database import SessionLocal
-from api.models import AuditLog, User
-from api.endpoints.auth import create_access_token
-from api.enums import UserRoleEnum
-
-# client is imported via conftest.py
+from api.models import AuditLog
 
 
-@pytest.fixture(scope="module")
-def senior_token():
+def test_get_audit_logs_basic(client, test_user):
+    user_id, test_run_id = test_user
     db = SessionLocal()
-    senior_user = User(
-        email="senior_test_user@example.com",
-        hashed_password="not_validated_for_test",
-        full_name="Example senior User",
-        role=UserRoleEnum.senior,
-    )
-    db.add(senior_user)
-    db.commit()
-    db.refresh(senior_user)
 
-    token = create_access_token(
-        {"sub": senior_user.email, "role": senior_user.role.value}
-    )
-
-    yield token
-
-    db.delete(senior_user)
-    db.commit()
-    db.close()
-
-
-@pytest.fixture(scope="module", autouse=True)
-def setup_audit_log_test_data():
-    db = SessionLocal()
     now = datetime.now(timezone.utc)
-    logs = []
 
+    # Create audit logs tied to user_id
     for i in range(5):
         log = AuditLog(
             timestamp=now - timedelta(days=i),
-            user_id=None,
+            user_id=user_id,
             action="TEST_ACTION",
             entity_type="TestEntity",
             entity_id=i + 1,
             changes={"field": f"change_{i}"},
         )
         db.add(log)
-        logs.append(log)
-
     db.commit()
 
-    yield
-
-    for log in logs:
-        db.delete(log)
-
-    db.commit()
-    db.close()
-
-
-def test_get_audit_logs_basic(client, senior_token):
     response = client.get(
-        "/api/audit-logs/", headers={"Authorization": f"Bearer {senior_token}"}
+        "/api/audit-logs/",
+        headers={
+            "Authorization": f"Bearer {client.post('/api/auth/login', json={ 'email': f'testuser-{test_run_id}@example.com', 'password': 'strongpassword' }).json()['access_token']}"
+        },
     )
     assert response.status_code == 200
     data = response.json()
     assert isinstance(data, list)
     assert len(data) == 5
     assert data[0]["action"] == "TEST_ACTION"
+    db.close()
 
 
-def test_get_audit_logs_with_date_filter(client, senior_token):
-    now = datetime.now(timezone.utc).replace(microsecond=0)
+def test_get_audit_logs_with_date_filter(client, test_user):
+    user_id, test_run_id = test_user
+    db = SessionLocal()
+    now = datetime.now(timezone.utc)
+
+    # Create audit logs
+    for i in range(5):
+        db.add(
+            AuditLog(
+                timestamp=now - timedelta(days=i),
+                user_id=user_id,
+                action="FILTER_TEST",
+                entity_type="FilterTest",
+                entity_id=i + 1,
+                changes={"filter": f"value_{i}"},
+            )
+        )
+    db.commit()
+
     future_time = (now + timedelta(seconds=1)).isoformat()
-
     response = client.get(
         "/api/audit-logs/",
-        params={"start_date": future_time, "limit": 10},
-        headers={"Authorization": f"Bearer {senior_token}"},
+        params={"start_date": future_time},
+        headers={
+            "Authorization": f"Bearer {client.post('/api/auth/login', json={ 'email': f'testuser-{test_run_id}@example.com', 'password': 'strongpassword' }).json()['access_token']}"
+        },
     )
     assert response.status_code == 200
     assert len(response.json()) == 0
@@ -88,17 +70,39 @@ def test_get_audit_logs_with_date_filter(client, senior_token):
     response = client.get(
         "/api/audit-logs/",
         params={"start_date": two_days_ago},
-        headers={"Authorization": f"Bearer {senior_token}"},
+        headers={
+            "Authorization": f"Bearer {client.post('/api/auth/login', json={ 'email': f'testuser-{test_run_id}@example.com', 'password': 'strongpassword' }).json()['access_token']}"
+        },
     )
     assert response.status_code == 200
     assert len(response.json()) >= 1
+    db.close()
 
 
-def test_get_audit_logs_with_pagination(client, senior_token):
+def test_get_audit_logs_with_pagination(client, test_user):
+    user_id, test_run_id = test_user
+    db = SessionLocal()
+    now = datetime.now(timezone.utc)
+
+    for i in range(5):
+        db.add(
+            AuditLog(
+                timestamp=now - timedelta(days=i),
+                user_id=user_id,
+                action="PAGINATION_TEST",
+                entity_type="PaginationTest",
+                entity_id=i + 100,
+                changes={"page": f"page_{i}"},
+            )
+        )
+    db.commit()
+
     response = client.get(
         "/api/audit-logs/",
         params={"skip": 0, "limit": 2},
-        headers={"Authorization": f"Bearer {senior_token}"},
+        headers={
+            "Authorization": f"Bearer {client.post('/api/auth/login', json={ 'email': f'testuser-{test_run_id}@example.com', 'password': 'strongpassword' }).json()['access_token']}"
+        },
     )
     assert response.status_code == 200
     assert len(response.json()) == 2
@@ -106,7 +110,10 @@ def test_get_audit_logs_with_pagination(client, senior_token):
     response_next = client.get(
         "/api/audit-logs/",
         params={"skip": 2, "limit": 2},
-        headers={"Authorization": f"Bearer {senior_token}"},
+        headers={
+            "Authorization": f"Bearer {client.post('/api/auth/login', json={ 'email': f'testuser-{test_run_id}@example.com', 'password': 'strongpassword' }).json()['access_token']}"
+        },
     )
     assert response_next.status_code == 200
-    assert len(response_next.json()) >= 0  # could be less than 2 if <4 logs exist
+    assert len(response_next.json()) >= 0
+    db.close()

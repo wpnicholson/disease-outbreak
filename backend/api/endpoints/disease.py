@@ -14,7 +14,7 @@ Returns:
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from typing import List
 from api import models, schemas
 from api.dependencies import get_db
@@ -105,7 +105,12 @@ def upsert_disease(
     Returns:
         _type_: The updated or newly created disease associated with the report.
     """
-    report = db.query(models.Report).filter(models.Report.id == report_id).first()
+    report = (
+        db.query(models.Report)
+        .options(selectinload(models.Report.patient))
+        .filter(models.Report.id == report_id)
+        .first()
+    )
     if not report:
         raise HTTPException(status_code=404, detail="Report not found")
     if report.status != ReportStateEnum.draft:

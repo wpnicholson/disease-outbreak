@@ -1,11 +1,7 @@
-from fastapi.testclient import TestClient
-from api.main import app
+def test_patient_validation(client, test_user):
+    user_id, test_run_id = test_user
 
-client = TestClient(app)
-
-
-def test_patient_validation(test_user):
-    report_id = client.post("/api/reports/", params={"created_by": test_user}).json()[
+    report_id = client.post("/api/reports/", params={"created_by": user_id}).json()[
         "id"
     ]
     client.post(
@@ -13,7 +9,7 @@ def test_patient_validation(test_user):
         json={
             "first_name": "Dr.",
             "last_name": "Who",
-            "email": "doctor@example.com",
+            "email": f"doctor-{test_run_id}@example.com",
             "job_title": "Doctor",
             "phone_number": "+111111111",
             "hospital_name": "TARDIS",
@@ -29,7 +25,7 @@ def test_patient_validation(test_user):
             "last_name": "Doe",
             "date_of_birth": future_dob,
             "gender": "Male",
-            "medical_record_number": "ABC123",
+            "medical_record_number": f"ABC123-{test_run_id}",
             "patient_address": "123 St",
             "emergency_contact": "None",
         },
@@ -37,8 +33,10 @@ def test_patient_validation(test_user):
     assert invalid_resp.status_code == 400
 
 
-def test_patient_missing_reporter(test_user):
-    report_id = client.post("/api/reports/", params={"created_by": test_user}).json()[
+def test_patient_missing_reporter(client, test_user):
+    user_id, test_run_id = test_user
+
+    report_id = client.post("/api/reports/", params={"created_by": user_id}).json()[
         "id"
     ]
     response = client.post(
@@ -48,7 +46,7 @@ def test_patient_missing_reporter(test_user):
             "last_name": "Smith",
             "date_of_birth": "1990-01-01",
             "gender": "Female",
-            "medical_record_number": "MRN001",
+            "medical_record_number": f"MRN001-{test_run_id}",
             "patient_address": "Address",
             "emergency_contact": "N/A",
         },
@@ -56,14 +54,16 @@ def test_patient_missing_reporter(test_user):
     assert response.status_code == 400
 
 
-def test_get_patient_not_found(test_user):
+def test_get_patient_not_found(client, test_user):
     invalid_report = 99999
     response = client.get(f"/api/reports/{invalid_report}/patient")
     assert response.status_code == 404
 
 
-def test_add_patient_success(test_user):
-    report_id = client.post("/api/reports/", params={"created_by": test_user}).json()[
+def test_add_patient_success(client, test_user):
+    user_id, test_run_id = test_user
+
+    report_id = client.post("/api/reports/", params={"created_by": user_id}).json()[
         "id"
     ]
     client.post(
@@ -71,7 +71,7 @@ def test_add_patient_success(test_user):
         json={
             "first_name": "Dr.",
             "last_name": "Who",
-            "email": "doctor@example.com",
+            "email": f"doctor-{test_run_id}@example.com",
             "job_title": "Doctor",
             "phone_number": "+14155552671",
             "hospital_name": "TARDIS",
@@ -85,7 +85,7 @@ def test_add_patient_success(test_user):
             "last_name": "Pond",
             "date_of_birth": "1990-01-01",
             "gender": "Female",
-            "medical_record_number": "MRN100",
+            "medical_record_number": f"MRN100-{test_run_id}",
             "patient_address": "Leadworth",
             "emergency_contact": "Rory",
         },
@@ -93,19 +93,17 @@ def test_add_patient_success(test_user):
     assert response.status_code == 201
 
 
-def test_patient_duplicate_mrn_reuse(test_user):
-    report1 = client.post("/api/reports/", params={"created_by": test_user}).json()[
-        "id"
-    ]
-    report2 = client.post("/api/reports/", params={"created_by": test_user}).json()[
-        "id"
-    ]
+def test_patient_duplicate_mrn_reuse(client, test_user):
+    user_id, test_run_id = test_user
+
+    report1 = client.post("/api/reports/", params={"created_by": user_id}).json()["id"]
+    report2 = client.post("/api/reports/", params={"created_by": user_id}).json()["id"]
     client.post(
         f"/api/reports/{report1}/reporter",
         json={
             "first_name": "Doc",
             "last_name": "One",
-            "email": "doc1@example.com",
+            "email": f"doc1-{test_run_id}@example.com",
             "job_title": "Doctor",
             "phone_number": "+14155552671",
             "hospital_name": "Metro",
@@ -117,7 +115,7 @@ def test_patient_duplicate_mrn_reuse(test_user):
         json={
             "first_name": "Doc",
             "last_name": "Two",
-            "email": "doc2@example.com",
+            "email": f"doc2-{test_run_id}@example.com",
             "job_title": "Doctor",
             "phone_number": "+14155552672",
             "hospital_name": "Metro",
@@ -129,7 +127,7 @@ def test_patient_duplicate_mrn_reuse(test_user):
         "last_name": "Smith",
         "date_of_birth": "1980-01-01",
         "gender": "Male",
-        "medical_record_number": "DUPLICATE123",
+        "medical_record_number": f"DUPLICATE123-{test_run_id}",
         "patient_address": "Place",
         "emergency_contact": "N/A",
     }
@@ -138,8 +136,10 @@ def test_patient_duplicate_mrn_reuse(test_user):
     assert response.status_code == 201
 
 
-def test_edit_patient_after_submission_forbidden(test_user):
-    report_id = client.post("/api/reports/", params={"created_by": test_user}).json()[
+def test_edit_patient_after_submission_forbidden(client, test_user):
+    user_id, test_run_id = test_user
+
+    report_id = client.post("/api/reports/", params={"created_by": user_id}).json()[
         "id"
     ]
     client.post(
@@ -147,7 +147,7 @@ def test_edit_patient_after_submission_forbidden(test_user):
         json={
             "first_name": "X",
             "last_name": "Y",
-            "email": "xy@example.com",
+            "email": f"xy-{test_run_id}@example.com",
             "job_title": "Doctor",
             "phone_number": "+15555555555",
             "hospital_name": "ABC",
@@ -161,7 +161,7 @@ def test_edit_patient_after_submission_forbidden(test_user):
             "last_name": "Ent",
             "date_of_birth": "1970-01-01",
             "gender": "Male",
-            "medical_record_number": "LOCKED123",
+            "medical_record_number": f"LOCKED123-{test_run_id}",
             "patient_address": "Somewhere",
             "emergency_contact": "No one",
         },
@@ -174,7 +174,7 @@ def test_edit_patient_after_submission_forbidden(test_user):
             "last_name": "Edit",
             "date_of_birth": "1970-01-01",
             "gender": "Male",
-            "medical_record_number": "LOCKED123",
+            "medical_record_number": f"LOCKED123-{test_run_id}",
             "patient_address": "New Addr",
             "emergency_contact": "Still no one",
         },

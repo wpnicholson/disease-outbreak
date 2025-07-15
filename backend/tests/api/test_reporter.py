@@ -1,11 +1,6 @@
-from fastapi.testclient import TestClient
-from api.main import app
-
-client = TestClient(app)
-
-
-def test_reporter_flow(test_user):
-    report_resp = client.post("/api/reports/", params={"created_by": test_user})
+def test_reporter_flow(client, test_user):
+    user_id, test_run_id = test_user
+    report_resp = client.post("/api/reports/", params={"created_by": user_id})
     report_id = report_resp.json()["id"]
 
     reporter_resp = client.post(
@@ -13,7 +8,7 @@ def test_reporter_flow(test_user):
         json={
             "first_name": "Alice",
             "last_name": "Smith",
-            "email": "alice@example.com",
+            "email": f"alice-{test_run_id}@example.com",
             "job_title": "Physician",
             "phone_number": "+14155552671",
             "hospital_name": "City Hospital",
@@ -24,4 +19,4 @@ def test_reporter_flow(test_user):
 
     get_resp = client.get(f"/api/reports/{report_id}/reporter")
     assert get_resp.status_code == 200
-    assert get_resp.json()["email"] == "alice@example.com"
+    assert get_resp.json()["email"] == f"alice-{test_run_id}@example.com"

@@ -1,8 +1,8 @@
 """initial migration
 
-Revision ID: a0a89b9f693f
+Revision ID: b4ab269fbc37
 Revises: 
-Create Date: 2025-07-14 20:00:10.186601
+Create Date: 2025-07-14 23:50:21.079892
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'a0a89b9f693f'
+revision: str = 'b4ab269fbc37'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -67,8 +67,8 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('created_by', sa.Integer(), nullable=False),
     sa.Column('reporter_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['reporter_id'], ['reporters.id'], ),
+    sa.ForeignKeyConstraint(['created_by'], ['users.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['reporter_id'], ['reporters.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_reports_id'), 'reports', ['id'], unique=False)
@@ -82,7 +82,7 @@ def upgrade() -> None:
     sa.Column('lab_results', sa.String(length=1000), nullable=True),
     sa.Column('treatment_status', sa.Enum('none', 'ongoing', 'completed', name='treatmentstatusenum'), nullable=False),
     sa.Column('report_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['report_id'], ['reports.id'], ),
+    sa.ForeignKeyConstraint(['report_id'], ['reports.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_diseases_id'), 'diseases', ['id'], unique=False)
@@ -96,7 +96,7 @@ def upgrade() -> None:
     sa.Column('patient_address', sa.String(length=500), nullable=False),
     sa.Column('emergency_contact', sa.String(length=200), nullable=True),
     sa.Column('report_id', sa.Integer(), nullable=False),
-    sa.ForeignKeyConstraint(['report_id'], ['reports.id'], ),
+    sa.ForeignKeyConstraint(['report_id'], ['reports.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_patients_id'), 'patients', ['id'], unique=False)

@@ -1,11 +1,7 @@
-from fastapi.testclient import TestClient
-from api.main import app
 from api.enums import ReportStateEnum
 
-client = TestClient(app)
 
-
-def test_search_reports_empty():
+def test_search_reports_empty(client):
     params = {"status": ReportStateEnum.submitted.value}
 
     resp = client.get("/api/reports/search", params=params)
