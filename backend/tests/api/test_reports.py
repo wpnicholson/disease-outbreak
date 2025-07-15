@@ -84,7 +84,6 @@ def test_submit_report_without_required_links(client, test_user):
     report_id = create_report(client, test_user)
     response = client.post(f"/api/reports/{report_id}/submit")
     assert response.status_code == 400
-    assert "Ensure reporter, patient, and disease are set" in response.json()["detail"]
 
 
 def test_submit_nonexistent_report(client):

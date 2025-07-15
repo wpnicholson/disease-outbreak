@@ -142,7 +142,7 @@ def test_edit_patient_after_submission_forbidden(client, test_user):
     report_id = client.post("/api/reports/", params={"created_by": user_id}).json()[
         "id"
     ]
-    client.post(
+    response = client.post(
         f"/api/reports/{report_id}/reporter",
         json={
             "first_name": "X",
@@ -154,7 +154,9 @@ def test_edit_patient_after_submission_forbidden(client, test_user):
             "hospital_address": "Addr",
         },
     )
-    client.post(
+    assert response.status_code == 201
+
+    response = client.post(
         f"/api/reports/{report_id}/patient",
         json={
             "first_name": "Pat",
@@ -166,7 +168,27 @@ def test_edit_patient_after_submission_forbidden(client, test_user):
             "emergency_contact": "No one",
         },
     )
-    client.post(f"/api/reports/{report_id}/submit")
+    assert response.status_code == 201
+
+    response = client.post(
+        f"/api/reports/{report_id}/disease",
+        json={
+            "disease_name": "Cold",
+            "disease_category": "Viral",
+            "date_detected": "2020-01-01",
+            "symptoms": ["Sneezing"],
+            "severity_level": "Low",
+            "treatment_status": "Ongoing",
+        },
+    )
+    assert response.status_code == 200
+
+    response = client.post(f"/api/reports/{report_id}/submit")
+    assert response.status_code == 200
+
+    submitted_report = client.get(f"/api/reports/{report_id}").json()
+    print(f"Submitted report status: {submitted_report['status']}")
+
     response = client.post(
         f"/api/reports/{report_id}/patient",
         json={

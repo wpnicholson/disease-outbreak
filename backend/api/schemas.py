@@ -1,5 +1,4 @@
 from pydantic import BaseModel, EmailStr, Field
-from pydantic_extra_types.phone_numbers import PhoneNumber
 from typing import Optional, List, Dict
 from datetime import date, datetime
 from api.enums import (
@@ -18,7 +17,7 @@ class ReporterBase(BaseModel):
     last_name: str = Field(..., max_length=50)
     email: EmailStr
     job_title: str = Field(..., max_length=100)
-    phone_number: PhoneNumber
+    phone_number: str = Field(..., max_length=20)
     hospital_name: str = Field(..., max_length=200)
     hospital_address: str = Field(..., max_length=500)
 

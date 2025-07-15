@@ -190,14 +190,11 @@ def submit_report(report_id: int, db: Session = Depends(get_db)):
             status_code=400, detail="Only draft reports can be submitted"
         )
 
-    # Ensure all required relationships exist
-    if not report.reporter or not report.patient or not report.disease:
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot submit incomplete report. Ensure reporter, patient, and disease are set.",
-        )
+    # Perform required completeness checks (reporter, patient, disease)
+    if not (report.reporter and report.patient and report.disease):
+        raise HTTPException(status_code=400, detail="Report incomplete")
 
     report.status = ReportStateEnum.submitted
     db.commit()
     db.refresh(report)
-    return {"message": "Report submitted successfully", "report_id": report.id}
+    return {"message": "Report submitted successfully", "status": report.status.value}

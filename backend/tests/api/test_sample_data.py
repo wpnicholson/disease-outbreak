@@ -37,7 +37,7 @@ def test_sample_data_seeding(db: Session, test_user: int):
     create_sample_data(db, test_user)
     report_count = db.query(Report).count()
 
-    assert db.query(Reporter).count() == 3
-    assert db.query(Report).count() == 3
+    assert db.query(Reporter).count() == 5
+    assert db.query(Report).count() == 15
     assert db.query(Patient).count() == report_count
-    assert db.query(Disease).count() == 3
+    assert db.query(Disease).count() == 15
