@@ -9,6 +9,8 @@ export const actions = {
         const formData = await event.request.formData();
         const email = formData.get('email');
         const password = formData.get('password');
+        event.cookies.delete('session_id', { path: '/' });
+
 
         if (!email) {
             return fail(400, { missing_email: true });
