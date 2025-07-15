@@ -165,7 +165,15 @@ class UserBase(BaseModel):
     full_name: Optional[str] = Field(None, max_length=100)
 
 
-class UserCreate(UserBase):
+class UserSignup(UserBase):
+    """Create model for user data during signup.
+
+    Inherits email and full_name from UserBase and adds password and role fields.
+
+    Args:
+        UserBase (UserBase): Base model for user data.
+    """
+
     password: str = Field(..., min_length=8, max_length=128)
     role: UserRoleEnum = Field(default=UserRoleEnum.junior)
 
@@ -176,6 +184,27 @@ class UserCreate(UserBase):
                 "password": "plaintext_password_here",
                 "full_name": "Bob Smith",
                 "role": UserRoleEnum.junior,
+            }
+        }
+
+
+class UserLogin(BaseModel):
+    """Login model for user authentication.
+
+    Does not inherit from UserBase to avoid requiring full_name and role.
+
+    Args:
+        BaseModel (BaseModel): Pydantic base model for data validation.
+    """
+
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=128)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "email": "bob.smith@example.com",
+                "password": "plaintext_password_here",
             }
         }
 

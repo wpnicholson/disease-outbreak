@@ -9,12 +9,6 @@ Each report records details of a disease outbreak and is associated with:
 - A disease (one-to-one)
 - One or more patients (many-to-many)
 
-Core Features:
-- Create, retrieve, update, and delete outbreak reports.
-- Access control via JWT authentication.
-- Supports draft editing lifecycle (only draft reports are editable/deletable).
-- Integrated audit logging of report lifecycle changes.
-
 Endpoints:
 - POST   /api/reports: Create a new draft report.
 - GET    /api/reports: List paginated reports.

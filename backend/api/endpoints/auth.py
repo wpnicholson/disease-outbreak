@@ -85,11 +85,13 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     description="Create a new user account.",
     response_description="The newly created user account.",
 )
-def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+def signup(user_data: schemas.UserSignup, db: Session = Depends(get_db)):
     """Create a new user account.
 
+    All fields are required. The `role` defaults to `junior` if not provided.
+
     Args:
-        user_data (schemas.UserCreate): User data for signup.
+        user_data (schemas.UserSignup): User data for signup.
         db (Session, optional): Database session dependency. Defaults to Depends(get_db).
 
     Raises:
@@ -136,11 +138,13 @@ def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     description="Authenticate user and return access token.",
     response_description="Access token for the user.",
 )
-def login(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+def login(user_data: schemas.UserLogin, db: Session = Depends(get_db)):
     """Authenticate user and return access token.
 
+    You only need to provide email and password. The role is not required for login.
+
     Args:
-        user_data (schemas.UserCreate): User data for login, including email and password.
+        user_data (schemas.UserLogin): User data for login, including email and password.
         db (Session, optional): Database session dependency. Defaults to Depends(get_db).
 
     Raises:
