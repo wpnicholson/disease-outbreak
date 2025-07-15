@@ -133,6 +133,7 @@ def signup(user_data: schemas.UserSignup, db: Session = Depends(get_db)):
     responses={
         200: {"description": "User successfully logged in"},
         401: {"description": "Invalid credentials"},
+        404: {"description": "User not found"},
     },
     summary="User Login",
     description="Authenticate user and return access token.",
@@ -141,21 +142,26 @@ def signup(user_data: schemas.UserSignup, db: Session = Depends(get_db)):
 def login(user_data: schemas.UserLogin, db: Session = Depends(get_db)):
     """Authenticate user and return access token.
 
-    You only need to provide email and password. The role is not required for login.
+    You only need to provide `email` and `password` to login.
+
+    Neither `role` nor `full_name` are required for login.
 
     Args:
         user_data (schemas.UserLogin): User data for login, including email and password.
         db (Session, optional): Database session dependency. Defaults to Depends(get_db).
 
     Raises:
-        HTTPException: If the user does not exist or the password is incorrect.
-        HTTPException: If the credentials are invalid.
+        HTTPException: If the user does not exist.
+        HTTPException: If the password is invalid.
 
     Returns:
         dict: Mock access token for the user.
     """
     user = db.query(models.User).filter(models.User.email == user_data.email).first()
-    if not user or not verify_password(user_data.password, user.hashed_password):
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if not verify_password(user_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     access_token = create_access_token(

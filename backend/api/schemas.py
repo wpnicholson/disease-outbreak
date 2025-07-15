@@ -168,7 +168,9 @@ class UserBase(BaseModel):
 class UserSignup(UserBase):
     """Create model for user data during signup.
 
-    Inherits email and full_name from UserBase and adds password and role fields.
+    Inherits `email` and `full_name` from UserBase and adds `password` and `role` fields.
+
+    All fields except `role` are needed to signup. The `role` defaults to "junior" if not provided.
 
     Args:
         UserBase (UserBase): Base model for user data.
@@ -191,7 +193,7 @@ class UserSignup(UserBase):
 class UserLogin(BaseModel):
     """Login model for user authentication.
 
-    Does not inherit from UserBase to avoid requiring full_name and role.
+    Does not inherit from `UserBase` to avoid requiring `full_name` and `role` at login.
 
     Args:
         BaseModel (BaseModel): Pydantic base model for data validation.
