@@ -1,11 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse, StreamingResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 import csv
 import io
 
 from api import models, schemas
-from api.dependencies import get_db
+from api.dependencies import get_db, get_current_user
+from api.audit_log import log_audit_event
 
 router = APIRouter()
 
@@ -13,7 +14,7 @@ router = APIRouter()
 @router.get(
     "/export/{format}",
     summary="Export reports in specified format",
-    description="Exports all reports in the specified format (JSON or CSV).",
+    description="Exports all reports in the specified format (JSON or CSV). Only authenticated users can access this endpoint.",
     response_description="Exported report data.",
     responses={
         400: {
@@ -26,23 +27,59 @@ router = APIRouter()
         }
     },
 )
-def export_reports(format: str, db: Session = Depends(get_db)):
+def export_reports(
+    format: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    """
+    Export all report data in the specified format (json or csv).
+    Authenticated users only. Records an audit log of the export.
+
+    Args:
+        format (str): Export format ('json' or 'csv').
+        db (Session): Database session.
+        user (models.User): Authenticated user requesting the export.
+
+    Returns:
+        JSONResponse or StreamingResponse: Exported data.
+    """
     if format.lower() not in {"json", "csv"}:
         raise HTTPException(status_code=400, detail="Format must be 'json' or 'csv'")
 
-    reports = db.query(models.Report).all()
+    reports = (
+        db.query(models.Report)
+        .options(
+            joinedload(models.Report.reporter),
+            joinedload(models.Report.patients),
+            joinedload(models.Report.disease),
+        )
+        .all()
+    )
+
+    # Log the export event
+    log_audit_event(
+        db=db,
+        user_id=user.id,
+        action="EXPORT",
+        entity_type="Report",
+        entity_id=0,
+        changes={"format": format.lower()},
+    )
 
     if format.lower() == "json":
         data = [
-            schemas.Report.model_validate(r).model_dump(mode="json") for r in reports
+            schemas.Report.model_validate(r, from_attributes=True).model_dump(
+                mode="json"
+            )
+            for r in reports
         ]
         return JSONResponse(content=data)
 
-    # CSV format
+    # CSV export
     output = io.StringIO()
     writer = csv.writer(output)
 
-    # Header
     writer.writerow(
         [
             "report_id",
@@ -50,21 +87,25 @@ def export_reports(format: str, db: Session = Depends(get_db)):
             "created_at",
             "updated_at",
             "reporter_email",
-            "patient_name",
+            "patients",
             "disease_name",
         ]
     )
 
-    # Rows
     for r in reports:
+        patient_names = (
+            ", ".join(f"{p.first_name} {p.last_name}" for p in r.patients)
+            if r.patients
+            else ""
+        )
         writer.writerow(
             [
                 r.id,
                 r.status.value,
-                r.created_at,
-                r.updated_at,
+                r.created_at.isoformat() if r.created_at else "",
+                r.updated_at.isoformat() if r.updated_at else "",
                 r.reporter.email if r.reporter else "",
-                f"{r.patient.first_name} {r.patient.last_name}" if r.patient else "",
+                patient_names,
                 r.disease.disease_name if r.disease else "",
             ]
         )
