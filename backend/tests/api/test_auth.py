@@ -1,16 +1,5 @@
-import pytest
 from fastapi.testclient import TestClient
 from api.models import User
-
-
-@pytest.fixture(scope="function")
-def signup_payload(test_run_id):
-    return {
-        "email": f"pytest-user-{test_run_id}@example.com",
-        "password": "pytestpassword",
-        "full_name": "Pytest User",
-        "role": "Senior",
-    }
 
 
 def test_signup_success(client: TestClient, db_session, signup_payload):

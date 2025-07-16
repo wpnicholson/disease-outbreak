@@ -5,7 +5,7 @@ from api.main import app
 from api.database import SessionLocal
 from api.models import User, Report, Reporter, Patient, Disease, AuditLog
 from api.enums import UserRoleEnum
-from api.endpoints.auth import hash_password, create_access_token
+from api.endpoints.auth import hash_password
 import uuid
 
 
@@ -60,9 +60,21 @@ def test_user(db_session: Session, test_run_id: str):
 
 
 @pytest.fixture(scope="function")
-def auth_headers(test_user):
-    """Generates authorization headers for the test user."""
-    access_token = create_access_token(
-        data={"sub": test_user.email, "role": test_user.role.value}
+def signup_payload(test_run_id):
+    return {
+        "email": f"pytest-user-{test_run_id}@example.com",
+        "password": "pytestpassword",
+        "full_name": "Pytest User",
+        "role": "Senior",
+    }
+
+
+@pytest.fixture(scope="function")
+def auth_headers(client, db_session, signup_payload):
+    client.post("/api/auth/signup", json=signup_payload)
+    response = client.post(
+        "/api/auth/login",
+        json={"email": signup_payload["email"], "password": signup_payload["password"]},
     )
-    return {"Authorization": f"Bearer {access_token}"}
+    token = response.json()["access_token"]
+    return {"Authorization": f"Bearer {token}"}
