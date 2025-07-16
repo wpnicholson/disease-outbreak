@@ -9,8 +9,11 @@ export const actions = {
         const formData = await event.request.formData();
         const email = formData.get('email');
         const password = formData.get('password');
-        event.cookies.delete('session_id', { path: '/' });
 
+        // Clear any existing session cookies.
+        event.cookies.delete('session_id', { path: '/' });
+        // Clear any existing session user cookies.
+        event.cookies.delete('session_user', { path: '/' });
 
         if (!email) {
             return fail(400, { missing_email: true });
@@ -26,18 +29,39 @@ export const actions = {
             body: JSON.stringify({ email, password }),
         });
 
+        if (response.status === 401) {
+            return fail(401, { email, password_incorrect: true });
+        }
+        if (response.status === 404) {
+            return fail(404, { email, user_not_found: true });
+        }
         if (!response.ok) {
-            return fail(400, { email, password_incorrect: true });
+            return fail(500, { unknown_error: true });
         }
 
-        const { access_token } = await response.json();
+        const { access_token, user } = await response.json();
+
+        // User is returned as JSON string, parse it
+        const userObj = JSON.parse(user);
+
+        // Set cookies
         event.cookies.set('session_id', access_token, {
             path: '/',
             httpOnly: true,
             sameSite: 'lax',
-            secure: isProduction, // Use secure cookies in production
-            maxAge: 60 * 60 // 1 hour
+            secure: isProduction,
+            maxAge: 60 * 60
         });
+
+        // Optional: store user in a non-httpOnly cookie for client-side access
+        event.cookies.set('session_user', JSON.stringify(userObj), {
+            path: '/',
+            httpOnly: false,
+            sameSite: 'lax',
+            secure: isProduction,
+            maxAge: 60 * 60
+        });
+
         throw redirect(303, '/dashboard');
     }
 } satisfies Actions;

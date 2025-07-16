@@ -287,7 +287,7 @@ def get_report(
 )
 def update_report(
     report_id: int,
-    report_data: schemas.ReportBase,
+    report_data: schemas.ReportUpdate,
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
@@ -323,7 +323,9 @@ def update_report(
     if report.status != models.ReportStateEnum.draft:
         raise HTTPException(status_code=400, detail="Only draft reports can be edited")
 
-    report.status = report_data.status
+    for field, value in report_data.model_dump(exclude_unset=True).items():
+        setattr(report, field, value)
+
     db.commit()
     db.refresh(report)
 

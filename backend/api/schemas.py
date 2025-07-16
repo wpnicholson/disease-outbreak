@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional, List, Dict
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from api.enums import (
     GenderEnum,
     DiseaseCategoryEnum,
@@ -129,6 +129,46 @@ class ReportCreate(ReportBase):
                 "reporter_id": 1,
                 "disease_id": 1,
                 "patients": [1, 2, 3],
+            }
+        }
+
+
+class ReportUpdate(BaseModel):
+    status: Optional[ReportStateEnum] = ReportStateEnum.draft
+    reporter_id: Optional[int] = None
+    reporter: Optional[Reporter] = None
+    disease_id: Optional[int] = None
+    disease: Optional[Disease] = None
+    patients: Optional[List[Patient]] = None
+    updated_at: Optional[datetime] = datetime.now(timezone.utc)
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "status": ReportStateEnum.draft,
+                "reporter_id": 1,
+                "reporter": {
+                    "id": 1,
+                    "first_name": "Alice",
+                    "last_name": "Doe",
+                    "email": "reporter@email.com",
+                    "job_title": "Epidemiologist",
+                    "phone_number": "+1234567890",
+                    "hospital_name": "City Hospital",
+                    "hospital_address": "123 Health St, Metropolis",
+                },
+                "disease_id": 2,
+                "disease": {
+                    "id": 2,
+                    "disease_name": "Influenza",
+                    "disease_category": DiseaseCategoryEnum.viral,
+                    "date_detected": "2023-10-01",
+                    "symptoms": ["fever", "cough"],
+                    "severity_level": SeverityLevelEnum.medium,
+                    "treatment_status": TreatmentStatusEnum.ongoing,
+                },
+                "patients": [1, 2],
+                "updated_at": "2023-10-01T12:00:00Z",
             }
         }
 

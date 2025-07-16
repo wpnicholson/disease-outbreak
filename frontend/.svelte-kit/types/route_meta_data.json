@@ -1,6 +1,15 @@
 {
 	"/": [],
-	"/dashboard": [],
+	"/dashboard": [
+		"src/routes/dashboard/+page.server.ts"
+	],
+	"/dashboard/audit-logs": [],
+	"/dashboard/reports/[id]": [],
+	"/dashboard/reports/[id]/disease": [],
+	"/dashboard/reports/[id]/patient": [],
+	"/dashboard/reports/[id]/reporter": [],
+	"/dashboard/statistics": [],
+	"/dashboard/summary": [],
 	"/login": [
 		"src/routes/login/+page.server.ts"
 	]

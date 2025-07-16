@@ -1,19 +1,34 @@
-import { redirect } from '@sveltejs/kit'; // The 'redirect' helper is imported from '@sveltejs/kit'
+import { redirect } from '@sveltejs/kit';
 
-/** @type {import('@sveltejs/kit').Handle} */ // The `handle` hook is of type `Handle` from `@sveltejs/kit`.
-export async function handle({ event, resolve }) { // The `handle` function receives an `event` object and a `resolve` function.
-    const sessionid = event.cookies.get('session_id'); // Access cookies from the `event` object to get the session ID.
+/** @type {import('@sveltejs/kit').Handle} */
+export async function handle({ event, resolve }) {
+    const sessionId = event.cookies.get('session_id');
+    const sessionUser = event.cookies.get('session_user');
 
-    // Protect specific routes (e.g., '/admin', '/dashboard')
-    if (!sessionid && event.url.pathname.startsWith('/dashboard')) { // The `event.url` object provides properties like `pathname`.
-        // Redirect to login, preserving the intended destination
-        const redirectTo = event.url.pathname + event.url.search;
-        const params = new URLSearchParams({ redirectTo });
-        // Use the `redirect` helper with an HTTP status code (e.g., 307 Temporary Redirect) and the login URL.
-        // Calling `redirect(...)` will throw an exception, stopping further execution.
-        redirect(307, `/login?${params}`);
+    // Hydrate authenticated user into event.locals
+    if (sessionId && sessionUser) {
+        try {
+            event.locals.user = JSON.parse(sessionUser);
+            event.locals.token = sessionId;
+            // Optional: Basic expiry check
+            // const { exp } = jwtDecode(sessionId);
+            // if (Date.now() >= exp * 1000) throw new Error('Token expired');
+        } catch (error) {
+            console.warn('Failed to parse session cookies', error);
+            event.locals.user = undefined;
+            event.locals.token = undefined;
+        }
+    } else {
+        event.locals.user = undefined;
+        event.locals.token = undefined;
     }
 
-    const response = await resolve(event); // The `resolve` function renders the route and generates a `Response`.
-    return response;
+    // Redirect unauthenticated access to /dashboard
+    if (!event.locals.user && event.url.pathname.startsWith('/dashboard')) {
+        const redirectTo = event.url.pathname + event.url.search;
+        const params = new URLSearchParams({ redirectTo });
+        throw redirect(303, `/login?${params}`);
+    }
+
+    return resolve(event);
 }

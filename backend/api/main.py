@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.openapi.utils import get_openapi
+from fastapi.middleware.cors import CORSMiddleware
 from api.endpoints import (
     reports,
     reporter,
@@ -13,6 +14,14 @@ from api.endpoints import (
 )
 
 app = FastAPI(title="Disease Outbreak Reporting System", version="0.1.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Change this to restrict origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 # Custom OpenAPI schema with Bearer Authentication

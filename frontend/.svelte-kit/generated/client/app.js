@@ -6,15 +6,30 @@ export const nodes = [
 	() => import('./nodes/2'),
 	() => import('./nodes/3'),
 	() => import('./nodes/4'),
-	() => import('./nodes/5')
+	() => import('./nodes/5'),
+	() => import('./nodes/6'),
+	() => import('./nodes/7'),
+	() => import('./nodes/8'),
+	() => import('./nodes/9'),
+	() => import('./nodes/10'),
+	() => import('./nodes/11'),
+	() => import('./nodes/12'),
+	() => import('./nodes/13')
 ];
 
 export const server_loads = [];
 
 export const dictionary = {
-		"/": [3],
-		"/dashboard": [4],
-		"/login": [~5,[2]]
+		"/": [4],
+		"/dashboard": [~5,[2]],
+		"/dashboard/audit-logs": [6,[2]],
+		"/dashboard/reports/[id]": [7,[2]],
+		"/dashboard/reports/[id]/disease": [8,[2]],
+		"/dashboard/reports/[id]/patient": [9,[2]],
+		"/dashboard/reports/[id]/reporter": [10,[2]],
+		"/dashboard/statistics": [11,[2]],
+		"/dashboard/summary": [12,[2]],
+		"/login": [~13,[3]]
 	};
 
 export const hooks = {
