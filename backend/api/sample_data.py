@@ -118,5 +118,5 @@ def create_sample_data(db: Session, created_by_user_id: int):
     db.commit()
 
     print(
-        "✅ Seeded 5 reporters, 15 patients, 15 reports (draft/submitted/approved), each with a disease and patients."
+        "Seeded 5 reporters, 15 patients, 15 reports (draft/submitted/approved), each with a disease and patients."
     )

@@ -59,9 +59,9 @@ def seed():
         print(f"Senior user {senior_email} already exists, skipping creation.")
 
     # Seed sample data with junior user as creator
-    create_sample_data(db, created_by_user_id=junior_user.id)
+    create_sample_data(db, created_by_user_id=junior_user.id)  # type: ignore
 
-    print("✅ Sample data seeded successfully.")
+    print("Sample data seeded successfully.")
 
     db.close()
 
