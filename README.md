@@ -405,7 +405,7 @@ seed:
   $(DC) exec $(SERVICE) bash -c "cd /code && python seed_data.py"
 ```
 
-## Testing
+## Testing of the backend api
 
 ### To execute testing
 
@@ -443,6 +443,13 @@ Platform Linux, python 3.11.13-final-0
 | **Stmts**  | Total number of executable statements (lines of code) in each file.        |
 | **Miss**   | Number of statements **not executed by any test** (i.e., missed coverage). |
 | **Cover**  | Percentage of statements **executed by your tests** (coverage %).          |
+
+## Frontend
+
+- Unfortunately the frontend is not quite finished.
+- It is a full-stack SveltKit application.
+- From a new terminal, change directories into the `frontend/` folder.
+  - From there run the command `npm run dev` to start the application.
 
 ## Endpoint Design
 
