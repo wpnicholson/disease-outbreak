@@ -1,10 +1,20 @@
+"""
+Statistics Endpoint
+
+This module provides an API endpoint to fetch basic statistical summaries from the
+Disease Outbreak Reporting System. It includes counts of reports, disease breakdowns,
+patient age averages, and most common diseases.
+
+Accessible only to authenticated users.
+"""
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import date
 
 from api import models, schemas
-from api.dependencies import get_db
+from api.dependencies import get_db, get_current_user
 
 router = APIRouter()
 
@@ -12,51 +22,82 @@ router = APIRouter()
 @router.get(
     "/statistics",
     response_model=schemas.StatisticsSummary,
-    summary="Get aggregate disease report statistics",
-    description="Returns counts of reports by status, disease category, severity, average patient age, and most common disease.",
-    response_description="Statistics summary of reports in the system.",
+    summary="Get basic statistics summary",
+    description="Returns statistical summaries such as total reports, reports by status, diseases by category, most common disease, and average patient age.",
+    response_description="Basic statistics summary.",
 )
-def get_statistics(db: Session = Depends(get_db)):
+def get_statistics(
+    db: Session = Depends(get_db),
+    _: models.User = Depends(get_current_user),
+):
+    """
+    Retrieve aggregated statistics from the system.
+
+    Statistics include:
+    - Total number of reports.
+    - Number of reports by status.
+    - Number of diseases by category and severity.
+    - Most common disease by report count.
+    - Average patient age across all patients.
+
+    Args:
+        db (Session): SQLAlchemy database session.
+        _: models.User: Authenticated user making the request (validated but unused).
+
+    Returns:
+        schemas.StatisticsSummary: Statistical summary response.
+    """
     total_reports = db.query(func.count(models.Report.id)).scalar()
 
-    status_counts = dict(
-        db.query(models.Report.status, func.count(models.Report.id))
-        .group_by(models.Report.status)
-        .all()
-    )
+    # Reports by status
+    reports_by_status = {
+        status.value: db.query(func.count(models.Report.id))
+        .filter(models.Report.status == status)
+        .scalar()
+        for status in models.ReportStateEnum
+    }
 
-    category_counts = dict(
-        db.query(models.Disease.disease_category, func.count(models.Disease.id))
-        .group_by(models.Disease.disease_category)
-        .all()
-    )
+    # Diseases by category
+    diseases_by_category = {
+        category.value: db.query(func.count(models.Disease.id))
+        .filter(models.Disease.disease_category == category)
+        .scalar()
+        for category in models.DiseaseCategoryEnum
+    }
 
-    severity_counts = dict(
-        db.query(models.Disease.severity_level, func.count(models.Disease.id))
-        .group_by(models.Disease.severity_level)
-        .all()
-    )
+    # Diseases by severity
+    diseases_by_severity = {
+        severity.value: db.query(func.count(models.Disease.id))
+        .filter(models.Disease.severity_level == severity)
+        .scalar()
+        for severity in models.SeverityLevelEnum
+    }
 
-    today = date.today()
-    patient_ages = db.query(models.Patient.date_of_birth).all()
-    age_values = [
-        today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
-        for (dob,) in patient_ages
-    ]
-    average_age = round(sum(age_values) / len(age_values), 1) if age_values else None
-
+    # Most common disease by name (if any)
     most_common_disease = (
-        db.query(models.Disease.disease_name, func.count(models.Disease.id))
+        db.query(
+            models.Disease.disease_name, func.count(models.Disease.id).label("count")
+        )
         .group_by(models.Disease.disease_name)
         .order_by(func.count(models.Disease.id).desc())
+        .limit(1)
         .first()
     )
+    most_common_disease_name = most_common_disease[0] if most_common_disease else None
+
+    # Average patient age calculation
+    today = date.today()
+    ages_query = db.query(
+        func.avg(func.date_part("year", func.age(today, models.Patient.date_of_birth)))
+    ).scalar()
+
+    average_patient_age = round(ages_query, 2) if ages_query is not None else None
 
     return schemas.StatisticsSummary(
         total_reports=total_reports,
-        reports_by_status=status_counts,
-        diseases_by_category=category_counts,
-        diseases_by_severity=severity_counts,
-        average_patient_age=average_age,
-        most_common_disease=most_common_disease[0] if most_common_disease else None,
+        reports_by_status=reports_by_status,
+        diseases_by_category=diseases_by_category,
+        diseases_by_severity=diseases_by_severity,
+        average_patient_age=average_patient_age,
+        most_common_disease=most_common_disease_name,
     )
