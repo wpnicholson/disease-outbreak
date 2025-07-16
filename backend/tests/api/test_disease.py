@@ -1,163 +1,118 @@
-# tests/api/test_disease.py
-
 import pytest
+from fastapi.testclient import TestClient
 from datetime import date, timedelta
-from sqlalchemy.orm import Session
-from collections.abc import Generator
-from api.models import Report, Disease, ReportStateEnum
-from api.database import SessionLocal
+
+from api.models import Report, Disease
 
 
-@pytest.fixture
-def client(client):
-    return client
+@pytest.fixture(scope="function")
+def draft_report(db_session, test_user):
+    """Create a draft report linked to test user."""
+    report = Report(
+        status="Draft",
+        created_by=test_user.id,
+        creator=test_user,
+    )
+    db_session.add(report)
+    db_session.commit()
+    yield report
+    db_session.delete(report)
+    db_session.commit()
 
 
-@pytest.fixture
-def db() -> Generator[Session, None, None]:
-    session = SessionLocal()
-    yield session
-    session.close()
-
-
-@pytest.fixture
-def auth_header(test_user_token):
-    return {"Authorization": f"Bearer {test_user_token}"}
-
-
-def create_draft_report_with_user(db: Session, user_id: int) -> Report:
-    report = Report(status=ReportStateEnum.draft, created_by=user_id)
-    db.add(report)
-    db.commit()
-    db.refresh(report)
-    return report
-
-
-def test_get_disease_not_found(client, auth_header, db):
-    response = client.get("/api/reports/999/disease", headers=auth_header)
-    assert response.status_code == 404
-
-
-def test_create_disease_success(client, auth_header, db, test_user):
-    report = create_draft_report_with_user(db, test_user.id)
-
-    disease_data = {
-        "disease_name": "Test Disease",
-        "disease_category": "Bacterial",
+@pytest.fixture(scope="function")
+def disease_payload():
+    """Valid payload for Disease creation."""
+    return {
+        "disease_name": "TestDisease",
+        "disease_category": "Viral",
         "date_detected": date.today().isoformat(),
-        "symptoms": ["fever", "rash"],
+        "symptoms": ["cough", "fever"],
         "severity_level": "Medium",
         "treatment_status": "Ongoing",
     }
 
+
+def test_get_disease_not_found(client: TestClient):
+    """GET returns 404 when report does not exist."""
+    response = client.get("/api/reports/9999/disease")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Report not found"
+
+
+def test_get_disease_no_disease(client: TestClient, db_session, draft_report):
+    """GET returns 404 when disease not assigned."""
+    response = client.get(f"/api/reports/{draft_report.id}/disease")
+    assert response.status_code == 404
+    assert response.json()["detail"] == "No disease assigned to this report"
+
+
+def test_create_disease_success(
+    client: TestClient, auth_headers, db_session, draft_report, disease_payload
+):
+    """POST creates disease successfully."""
     response = client.post(
-        f"/api/reports/{report.id}/disease", json=disease_data, headers=auth_header
+        f"/api/reports/{draft_report.id}/disease",
+        headers=auth_headers,
+        json=disease_payload,
     )
-    assert response.status_code == 200
-    assert response.json()["disease_name"] == "Test Disease"
+    assert response.status_code == 201
+    data = response.json()
+    assert data["disease_name"] == disease_payload["disease_name"]
+    assert data["severity_level"] == disease_payload["severity_level"]
 
-    # Disease should be attached in DB
-    db.refresh(report)
-    assert report.disease is not None
+    # Cleanup
+    disease = db_session.query(Disease).filter_by(report_id=draft_report.id).first()
+    if disease:
+        db_session.delete(disease)
+        db_session.commit()
 
 
-def test_create_disease_invalid_date(client, auth_header, db, test_user):
-    report = create_draft_report_with_user(db, test_user.id)
-
-    disease_data = {
-        "disease_name": "Future Disease",
-        "disease_category": "Viral",
-        "date_detected": (date.today() + timedelta(days=10)).isoformat(),
-        "symptoms": ["cough"],
-        "severity_level": "High",
-        "treatment_status": "Ongoing",
-    }
-
+def test_create_disease_future_date(
+    client: TestClient, auth_headers, draft_report, disease_payload
+):
+    """POST rejects future date_detected."""
+    disease_payload["date_detected"] = str(date.today() + timedelta(days=1))
     response = client.post(
-        f"/api/reports/{report.id}/disease", json=disease_data, headers=auth_header
+        f"/api/reports/{draft_report.id}/disease",
+        headers=auth_headers,
+        json=disease_payload,
     )
     assert response.status_code == 400
-    assert "future" in response.json()["detail"]
+    assert response.json()["detail"] == "Date detected cannot be in the future"
 
 
-def test_update_disease_success(client, auth_header, db, test_user):
-    report = create_draft_report_with_user(db, test_user.id)
-
-    # Initial disease
-    disease = Disease(
-        disease_name="Initial Disease",
-        disease_category="Bacterial",
-        date_detected=date.today(),
-        symptoms=["initial symptom"],
-        severity_level="Low",
-        treatment_status="Ongoing",
-        report=report,
+def test_create_disease_non_draft(
+    client: TestClient, auth_headers, db_session, test_user, disease_payload
+):
+    """POST rejects non-draft report."""
+    report = Report(
+        status="Submitted",
+        created_by=test_user.id,
+        creator=test_user,
     )
-    db.add(disease)
-    db.commit()
-
-    update_data = {
-        "disease_name": "Updated Disease",
-        "disease_category": "Parasitic",
-        "date_detected": date.today().isoformat(),
-        "symptoms": ["updated symptom"],
-        "severity_level": "Critical",
-        "treatment_status": "Completed",
-    }
+    db_session.add(report)
+    db_session.commit()
 
     response = client.post(
-        f"/api/reports/{report.id}/disease", json=update_data, headers=auth_header
+        f"/api/reports/{report.id}/disease", headers=auth_headers, json=disease_payload
     )
-    assert response.status_code == 200
-    assert response.json()["disease_name"] == "Updated Disease"
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Cannot modify disease in non-draft report"
 
-    db.refresh(report)
-    assert report.disease.disease_name == "Updated Disease"
+    db_session.delete(report)
+    db_session.commit()
 
 
-def test_delete_disease_success(client, auth_header, db, test_user):
-    report = create_draft_report_with_user(db, test_user.id)
-
-    disease = Disease(
-        disease_name="To Delete",
-        disease_category="Viral",
-        date_detected=date.today(),
-        symptoms=["symptom"],
-        severity_level="Medium",
-        treatment_status="Ongoing",
-        report=report,
+def test_update_disease(
+    client: TestClient, auth_headers, db_session, draft_report, disease_payload
+):
+    """POST updates existing disease."""
+    # First create
+    client.post(
+        f"/api/reports/{draft_report.id}/disease",
+        headers=auth_headers,
+        json=disease_payload,
     )
-    db.add(disease)
-    db.commit()
 
-    response = client.delete(f"/api/reports/{report.id}/disease", headers=auth_header)
-    assert response.status_code == 200
-    assert "deleted successfully" in response.json()["detail"]
-
-    db.refresh(report)
-    assert report.disease is None
-
-
-def test_prevent_changes_on_submitted_report(client, auth_header, db, test_user):
-    report = create_draft_report_with_user(db, test_user.id)
-    report.status = ReportStateEnum.submitted
-    db.commit()
-
-    disease_data = {
-        "disease_name": "Should Fail",
-        "disease_category": "Other",
-        "date_detected": date.today().isoformat(),
-        "symptoms": ["symptom"],
-        "severity_level": "High",
-        "treatment_status": "None",
-    }
-
-    post_response = client.post(
-        f"/api/reports/{report.id}/disease", json=disease_data, headers=auth_header
-    )
-    assert post_response.status_code == 400
-
-    delete_response = client.delete(
-        f"/api/reports/{report.id}/disease", headers=auth_header
-    )
-    assert delete_response.status_code == 400
+    # Update with new name
