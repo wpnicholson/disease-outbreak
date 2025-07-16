@@ -70,11 +70,23 @@ def signup_payload(test_run_id):
 
 
 @pytest.fixture(scope="function")
-def auth_headers(client, db_session, signup_payload):
+def auth_headers(client, db_session, signup_payload, test_run_id):
     client.post("/api/auth/signup", json=signup_payload)
     response = client.post(
         "/api/auth/login",
         json={"email": signup_payload["email"], "password": signup_payload["password"]},
     )
     token = response.json()["access_token"]
-    return {"Authorization": f"Bearer {token}"}
+
+    yield {"Authorization": f"Bearer {token}"}
+
+    # Cleanup block after test finishes
+    from api.models import User, AuditLog, Report
+
+    # Cleanup user
+    user = db_session.query(User).filter(User.email == signup_payload["email"]).first()
+    if user:
+        db_session.query(Report).filter(Report.created_by == user.id).delete()
+        db_session.query(AuditLog).filter(AuditLog.user_id == user.id).delete()
+        db_session.delete(user)
+        db_session.commit()

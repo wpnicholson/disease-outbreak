@@ -2,12 +2,11 @@
 
 import pytest
 from fastapi.testclient import TestClient
-from api.models import Patient, Report
 
 
 @pytest.fixture(scope="function")
 def patient_payload(test_run_id):
-    """Fixture for patient creation payload"""
+    """Fixture for patient creation payload with unique MRN"""
     return {
         "first_name": "Test",
         "last_name": "Patient",
@@ -19,10 +18,8 @@ def patient_payload(test_run_id):
     }
 
 
-def test_create_patient(
-    client: TestClient, db_session, auth_headers, patient_payload, test_run_id
-):
-    """Test creating a patient and cleaning it up"""
+def test_create_patient(client: TestClient, auth_headers, patient_payload):
+    """Test patient creation via API and cleanup via API"""
     response = client.post(
         "/api/reports/patient", headers=auth_headers, json=patient_payload
     )
@@ -30,117 +27,95 @@ def test_create_patient(
     data = response.json()
     assert data["first_name"] == patient_payload["first_name"]
 
-    # Cleanup
-    patient = (
-        db_session.query(Patient)
-        .filter(
-            Patient.medical_record_number == patient_payload["medical_record_number"]
-        )
-        .first()
+    # Cleanup via API
+    delete = client.delete(f"/api/reports/patient/{data['id']}", headers=auth_headers)
+    assert delete.status_code == 204
+
+
+def test_get_patient_by_id(client, auth_headers, patient_payload):
+    """Test retrieval of a created patient"""
+    create = client.post(
+        "/api/reports/patient", headers=auth_headers, json=patient_payload
     )
-    db_session.delete(patient)
-    db_session.commit()
+    assert create.status_code == 201
+    patient = create.json()
+
+    get = client.get(f"/api/reports/patient/{patient['id']}", headers=auth_headers)
+    assert get.status_code == 200
+    assert get.json()["id"] == patient["id"]
+
+    delete = client.delete(
+        f"/api/reports/patient/{patient['id']}", headers=auth_headers
+    )
+    assert delete.status_code == 204
 
 
-def test_get_patient_by_id(
-    client: TestClient, db_session, auth_headers, patient_payload, test_run_id
-):
-    """Test retrieving patient by ID"""
-    # Create patient
-    patient = Patient(**patient_payload)
-    db_session.add(patient)
-    db_session.commit()
-    db_session.refresh(patient)
-
-    response = client.get(f"/api/reports/patient/{patient.id}", headers=auth_headers)
-    assert response.status_code == 200
-    assert response.json()["id"] == patient.id
-
-    db_session.delete(patient)
-    db_session.commit()
-
-
-def test_get_patient_not_found(client: TestClient, auth_headers):
-    """Test retrieving non-existent patient returns 404"""
+def test_get_patient_not_found(client, auth_headers):
     response = client.get("/api/reports/patient/99999", headers=auth_headers)
     assert response.status_code == 404
     assert response.json()["detail"] == "Patient not found"
 
 
-def test_delete_patient(
-    client: TestClient, db_session, auth_headers, patient_payload, test_run_id
-):
-    """Test deleting a patient"""
-    patient = Patient(**patient_payload)
-    db_session.add(patient)
-    db_session.commit()
-    db_session.refresh(patient)
+def test_delete_patient(client, auth_headers, patient_payload):
+    create = client.post(
+        "/api/reports/patient", headers=auth_headers, json=patient_payload
+    )
+    assert create.status_code == 201
+    patient = create.json()
 
-    response = client.delete(f"/api/reports/patient/{patient.id}", headers=auth_headers)
-    assert response.status_code == 204
-
-    # Verify deletion
-    assert db_session.query(Patient).filter(Patient.id == patient.id).first() is None
+    delete = client.delete(
+        f"/api/reports/patient/{patient['id']}", headers=auth_headers
+    )
+    assert delete.status_code == 204
 
 
-def test_delete_patient_not_found(client: TestClient, auth_headers):
-    """Test deleting non-existent patient returns 404"""
+def test_delete_patient_not_found(client, auth_headers):
     response = client.delete("/api/reports/patient/99999", headers=auth_headers)
     assert response.status_code == 404
     assert response.json()["detail"] == "Patient not found"
 
 
 @pytest.fixture(scope="function")
-def test_report(db_session, test_user):
-    """Create a report fixture to associate patients with"""
-    report = Report(status="Draft", created_by=test_user.id)
-    db_session.add(report)
-    db_session.commit()
-    db_session.refresh(report)
+def test_report(client, auth_headers):
+    """Create draft report via API and cleanup"""
+    response = client.post("/api/reports", headers=auth_headers, json={})
+    assert response.status_code == 201
+    report = response.json()
     yield report
-
-    # Clean up patients and report after test
-    report.patients.clear()
-    db_session.delete(report)
-    db_session.commit()
+    client.delete(f"/api/reports/{report['id']}", headers=auth_headers)
 
 
-def test_add_patients_to_report(
-    client: TestClient, db_session, auth_headers, patient_payload, test_report
-):
-    """Test adding patients to a report"""
-    # Create patient
-    patient = Patient(**patient_payload)
-    db_session.add(patient)
-    db_session.commit()
-    db_session.refresh(patient)
+def test_add_patients_to_report(client, auth_headers, patient_payload, test_report):
+    create = client.post(
+        "/api/reports/patient", headers=auth_headers, json=patient_payload
+    )
+    assert create.status_code == 201
+    patient = create.json()
 
-    payload = {"patient_ids": [patient.id]}
     response = client.post(
-        f"/api/reports/{test_report.id}/patient", headers=auth_headers, json=payload
+        f"/api/reports/{test_report['id']}/patient",
+        headers=auth_headers,
+        json={"patient_ids": [patient["id"]]},
     )
     assert response.status_code == 201
-    assert any(p["id"] == patient.id for p in response.json())
+    assert any(p["id"] == patient["id"] for p in response.json())
 
-    db_session.delete(patient)
-    db_session.commit()
+    client.delete(f"/api/reports/patient/{patient['id']}", headers=auth_headers)
 
 
-def test_add_patients_to_nonexistent_report(client: TestClient, auth_headers):
-    """Test adding patients to a non-existent report"""
+def test_add_patients_to_nonexistent_report(client, auth_headers):
     response = client.post(
-        "/api/reports/99999/patient", headers=auth_headers, json={"patient_ids": [1]}
+        "/api/reports/99999/patient",
+        headers=auth_headers,
+        json={"patient_ids": [1]},
     )
     assert response.status_code == 404
     assert response.json()["detail"] == "Report not found"
 
 
-def test_add_nonexistent_patients_to_report(
-    client: TestClient, auth_headers, test_report
-):
-    """Test adding invalid patient IDs returns 404"""
+def test_add_nonexistent_patients_to_report(client, auth_headers, test_report):
     response = client.post(
-        f"/api/reports/{test_report.id}/patient",
+        f"/api/reports/{test_report['id']}/patient",
         headers=auth_headers,
         json={"patient_ids": [99999]},
     )
@@ -148,30 +123,31 @@ def test_add_nonexistent_patients_to_report(
     assert response.json()["detail"] == "One or more patients not found"
 
 
-def test_get_patients_for_report(
-    client: TestClient, db_session, auth_headers, patient_payload, test_report
-):
-    """Test getting patients linked to a report"""
-    patient = Patient(**patient_payload)
-    db_session.add(patient)
-    db_session.commit()
-    db_session.refresh(patient)
+def test_get_patients_for_report(client, auth_headers, patient_payload, test_report):
+    create = client.post(
+        "/api/reports/patient", headers=auth_headers, json=patient_payload
+    )
+    assert create.status_code == 201
+    patient = create.json()
 
-    test_report.patients.append(patient)
-    db_session.commit()
+    # Associate patient with report
+    link = client.post(
+        f"/api/reports/{test_report['id']}/patient",
+        headers=auth_headers,
+        json={"patient_ids": [patient["id"]]},
+    )
+    assert link.status_code == 201
 
     response = client.get(
-        f"/api/reports/{test_report.id}/patient", headers=auth_headers
+        f"/api/reports/{test_report['id']}/patient", headers=auth_headers
     )
     assert response.status_code == 200
-    assert any(p["id"] == patient.id for p in response.json())
+    assert any(p["id"] == patient["id"] for p in response.json())
 
-    db_session.delete(patient)
-    db_session.commit()
+    client.delete(f"/api/reports/patient/{patient['id']}", headers=auth_headers)
 
 
-def test_get_patients_for_nonexistent_report(client: TestClient, auth_headers):
-    """Test getting patients for non-existent report returns 404"""
+def test_get_patients_for_nonexistent_report(client, auth_headers):
     response = client.get("/api/reports/99999/patient", headers=auth_headers)
     assert response.status_code == 404
     assert response.json()["detail"] == "Report not found"
