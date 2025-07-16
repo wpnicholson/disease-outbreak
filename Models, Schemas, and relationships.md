@@ -23,7 +23,7 @@
 
 | Entity Deleted | Cascade Effect                                                                           |
 | -------------- | ---------------------------------------------------------------------------------------- |
-| `Reporter`     | Can delete `Reports`. Does not delete `Patients`.<br>`Diseases` handled via reports.     |
+| `Reporter`     | Can delete `Reports`. Does not delete `Patients`. `Diseases` handled via reports.     |
 | `Report`       | Deletes `Disease`, Deletes association links with `Patients`, Does not delete `Patients` |
 | `Disease`      | Cannot be deleted directly (must remove via `Report`)                                    |
 | `Patient`      | Can be deleted independently, Does not affect `Reports`                                  |
