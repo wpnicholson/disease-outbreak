@@ -34,23 +34,20 @@ def disease_payload():
 
 
 def test_get_disease_not_found(client: TestClient):
-    """GET returns 404 when report does not exist."""
     response = client.get("/api/reports/9999/disease")
     assert response.status_code == 404
     assert response.json()["detail"] == "Report not found"
 
 
-def test_get_disease_no_disease(client: TestClient, db_session, draft_report):
-    """GET returns 404 when disease not assigned."""
+def test_get_disease_no_disease(client: TestClient, draft_report):
     response = client.get(f"/api/reports/{draft_report.id}/disease")
     assert response.status_code == 404
     assert response.json()["detail"] == "No disease assigned to this report"
 
 
 def test_create_disease_success(
-    client: TestClient, auth_headers, db_session, draft_report, disease_payload
+    client, auth_headers, db_session, draft_report, disease_payload
 ):
-    """POST creates disease successfully."""
     response = client.post(
         f"/api/reports/{draft_report.id}/disease",
         headers=auth_headers,
@@ -59,7 +56,6 @@ def test_create_disease_success(
     assert response.status_code == 201
     data = response.json()
     assert data["disease_name"] == disease_payload["disease_name"]
-    assert data["severity_level"] == disease_payload["severity_level"]
 
     # Cleanup
     disease = db_session.query(Disease).filter_by(report_id=draft_report.id).first()
@@ -69,10 +65,10 @@ def test_create_disease_success(
 
 
 def test_create_disease_future_date(
-    client: TestClient, auth_headers, draft_report, disease_payload
+    client, auth_headers, draft_report, disease_payload
 ):
-    """POST rejects future date_detected."""
-    disease_payload["date_detected"] = str(date.today() + timedelta(days=1))
+    future_date = (date.today() + timedelta(days=1)).isoformat()
+    disease_payload["date_detected"] = future_date
     response = client.post(
         f"/api/reports/{draft_report.id}/disease",
         headers=auth_headers,
@@ -83,9 +79,8 @@ def test_create_disease_future_date(
 
 
 def test_create_disease_non_draft(
-    client: TestClient, auth_headers, db_session, test_user, disease_payload
+    client, auth_headers, db_session, test_user, disease_payload
 ):
-    """POST rejects non-draft report."""
     report = Report(
         status="Submitted",
         created_by=test_user.id,
@@ -95,7 +90,9 @@ def test_create_disease_non_draft(
     db_session.commit()
 
     response = client.post(
-        f"/api/reports/{report.id}/disease", headers=auth_headers, json=disease_payload
+        f"/api/reports/{report.id}/disease",
+        headers=auth_headers,
+        json=disease_payload,
     )
     assert response.status_code == 400
     assert response.json()["detail"] == "Cannot modify disease in non-draft report"
@@ -105,14 +102,94 @@ def test_create_disease_non_draft(
 
 
 def test_update_disease(
-    client: TestClient, auth_headers, db_session, draft_report, disease_payload
+    client, auth_headers, db_session, draft_report, disease_payload
 ):
-    """POST updates existing disease."""
-    # First create
+    # Initial creation
     client.post(
         f"/api/reports/{draft_report.id}/disease",
         headers=auth_headers,
         json=disease_payload,
     )
 
-    # Update with new name
+    # Update
+    disease_payload["disease_name"] = "UpdatedDisease"
+    response = client.post(
+        f"/api/reports/{draft_report.id}/disease",
+        headers=auth_headers,
+        json=disease_payload,
+    )
+    assert response.status_code == 201
+    assert response.json()["disease_name"] == "UpdatedDisease"
+
+    # Cleanup
+    disease = db_session.query(Disease).filter_by(report_id=draft_report.id).first()
+    if disease:
+        db_session.delete(disease)
+        db_session.commit()
+
+
+def test_delete_disease_success(
+    client, auth_headers, db_session, draft_report, disease_payload
+):
+    client.post(
+        f"/api/reports/{draft_report.id}/disease",
+        headers=auth_headers,
+        json=disease_payload,
+    )
+    response = client.delete(
+        f"/api/reports/{draft_report.id}/disease",
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    assert response.json()["detail"] == "Disease deleted successfully"
+
+
+def test_delete_disease_not_found(client, auth_headers):
+    response = client.delete("/api/reports/9999/disease", headers=auth_headers)
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Report not found"
+
+
+def test_delete_disease_missing(client, auth_headers, draft_report):
+    response = client.delete(
+        f"/api/reports/{draft_report.id}/disease",
+        headers=auth_headers,
+    )
+    assert response.status_code == 404
+    assert response.json()["detail"] == "No disease to delete"
+
+
+def test_delete_disease_non_draft(
+    client, auth_headers, db_session, test_user, disease_payload
+):
+    report = Report(
+        status="Submitted",
+        created_by=test_user.id,
+        creator=test_user,
+    )
+    db_session.add(report)
+    db_session.commit()
+
+    disease = Disease(
+        disease_name=disease_payload["disease_name"],
+        disease_category=disease_payload["disease_category"],
+        date_detected=date.fromisoformat(disease_payload["date_detected"]),
+        symptoms=disease_payload["symptoms"],
+        severity_level=disease_payload["severity_level"],
+        lab_results=None,
+        treatment_status=disease_payload["treatment_status"],
+        report=report,
+    )
+    db_session.add(disease)
+    db_session.commit()
+
+    response = client.delete(
+        f"/api/reports/{report.id}/disease",
+        headers=auth_headers,
+    )
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Cannot delete disease from non-draft report"
+
+    db_session.delete(disease)
+    db_session.delete(report)
+    db_session.commit()

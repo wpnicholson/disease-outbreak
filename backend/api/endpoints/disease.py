@@ -166,7 +166,7 @@ def create_or_update_disease(
         action=action,
         entity_type="Disease",
         entity_id=disease.id,
-        changes=disease_data.model_dump(),
+        changes=disease_data.model_dump(mode="json"),
     )
 
     return disease

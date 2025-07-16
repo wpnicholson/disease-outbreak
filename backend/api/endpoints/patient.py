@@ -181,7 +181,7 @@ def create_patient(
         action="CREATE",
         entity_type="Patient",
         entity_id=patient.id,
-        changes=patient_data.model_dump(),
+        changes=patient_data.model_dump(mode="json"),
     )
 
     return patient

@@ -121,7 +121,7 @@ def add_or_update_reporter(
         action=action,
         entity_type="Reporter",
         entity_id=reporter.id,
-        changes=reporter_data.model_dump(),
+        changes=reporter_data.model_dump(mode="json"),
     )
 
     return reporter
