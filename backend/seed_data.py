@@ -1,61 +1,68 @@
 import os
-from api.sample_data import create_sample_data
-from api.database import SessionLocal
-from api.models import User
-from api.enums import UserRoleEnum
-from api.endpoints.auth import hash_password
-from dotenv import load_dotenv
 import uuid
+from dotenv import load_dotenv
+from sqlalchemy.orm import Session
+
+from api.database import SessionLocal
+from api.models import User, UserRoleEnum
+from api.endpoints.auth import hash_password
+from api.sample_data import create_sample_data
 
 
 def seed():
-    unique_str = str(uuid.uuid4())
+    """Seed database with initial users and sample data."""
     load_dotenv()
+    db: Session = SessionLocal()
 
-    junior_password: str | None = os.getenv("JUNIOR_PASSWORD")
-    senior_password: str | None = os.getenv("SENIOR_PASSWORD")
+    unique_id = str(uuid.uuid4())[:8]
+
+    junior_password = os.getenv("JUNIOR_PASSWORD")
+    senior_password = os.getenv("SENIOR_PASSWORD")
 
     if not junior_password or not senior_password:
         raise ValueError(
-            "JUNIOR_PASSWORD and SENIOR_PASSWORD must be set as environment variables."
+            "JUNIOR_PASSWORD and SENIOR_PASSWORD must be set in environment variables."
         )
 
-    db = SessionLocal()
-
-    # Seed junior user
-    junior_email = f"junior-{unique_str}@example.com"
-    junior_user = db.query(User).filter(User.email == junior_email).first()
-    if not junior_user:
+    # Create Junior User
+    junior_email = f"junior-{unique_id}@example.com"
+    if not db.query(User).filter_by(email=junior_email).first():
         junior_user = User(
             email=junior_email,
             hashed_password=hash_password(junior_password),
-            full_name="Junior User",
+            full_name="Junior Test User",
             role=UserRoleEnum.junior,
         )
         db.add(junior_user)
         db.commit()
         db.refresh(junior_user)
         print(f"Created junior user: {junior_email}")
+    else:
+        junior_user = db.query(User).filter_by(email=junior_email).first()
+        print(f"Junior user {junior_email} already exists, skipping creation.")
 
-    # Seed senior user
-    senior_email = f"senior-{unique_str}@example.com"
-    senior_user = db.query(User).filter(User.email == senior_email).first()
-    if not senior_user:
+    # Create Senior User
+    senior_email = f"senior-{unique_id}@example.com"
+    if not db.query(User).filter_by(email=senior_email).first():
         senior_user = User(
             email=senior_email,
             hashed_password=hash_password(senior_password),
-            full_name="Senior User",
+            full_name="Senior Test User",
             role=UserRoleEnum.senior,
         )
         db.add(senior_user)
         db.commit()
         db.refresh(senior_user)
         print(f"Created senior user: {senior_email}")
+    else:
+        senior_user = db.query(User).filter_by(email=senior_email).first()
+        print(f"Senior user {senior_email} already exists, skipping creation.")
 
-    # Create sample data with the junior user.
-    create_sample_data(db, junior_user.id)
+    # Seed sample data with junior user as creator
+    create_sample_data(db, created_by_user_id=junior_user.id)
 
-    print("Sample data seeded successfully.")
+    print("✅ Sample data seeded successfully.")
+
     db.close()
 
 

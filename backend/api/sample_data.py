@@ -11,40 +11,60 @@ from api.enums import (
 import uuid
 
 
-def create_sample_data(db: Session, user_id: int):
-    unique_str = str(uuid.uuid4())
+def create_sample_data(db: Session, created_by_user_id: int):
+    """
+    Creates sample reporters, patients, reports, and diseases.
+    - 5 reporters.
+    - 15 patients.
+    - 15 reports (5 draft, 5 submitted, 5 approved), each linked to one reporter, one disease, and 1-3 patients.
+    """
+    unique_str = str(uuid.uuid4())[:8]
     today = date.today()
 
     # ---------------------------
-    # Create 5 Sample Reporters
+    # Create 5 Reporters
     # ---------------------------
-    phone_numbers = [
-        "+447700900001",
-        "+447700900002",
-        "+447700900003",
-        "+447700900004",
-        "+447700900005",
-        "+447700900006",
-    ]
-    reporters = [
-        models.Reporter(
-            first_name=f"Reporter{i}",
+    reporters = []
+    for i in range(5):
+        reporter = models.Reporter(
+            first_name=f"Reporter{i+1}",
             last_name="Smith",
-            email=f"reporter{i}-{unique_str}@example.com",
+            email=f"reporter{i+1}-{unique_str}@example.com",
             job_title="Epidemiologist",
-            phone_number=phone_numbers[i],
-            hospital_name=f"Hospital {i}",
-            hospital_address=f"{i} Main Street, City",
+            phone_number=f"+4477009000{i+1}",
+            hospital_name=f"Hospital {i+1}",
+            hospital_address=f"{i+1} Main Street, City",
         )
-        for i in range(1, 6)
-    ]
+        reporters.append(reporter)
     db.add_all(reporters)
     db.commit()
-    for reporter in reporters:
-        db.refresh(reporter)
+    [db.refresh(r) for r in reporters]
 
     # ---------------------------
-    # Create 15 Reports
+    # Create 15 Patients
+    # ---------------------------
+    patients = []
+    for i in range(15):
+        patient = models.Patient(
+            first_name=f"Patient{i+1}",
+            last_name="Lastname",
+            date_of_birth=today - timedelta(days=(20 + i) * 365),
+            gender=GenderEnum.male if i % 2 == 0 else GenderEnum.female,
+            medical_record_number=f"MRN-{unique_str}-{i+1}",
+            patient_address=f"{i+1} Health St, City",
+            emergency_contact=f"Emergency Contact {i+1}",
+        )
+        patients.append(patient)
+    db.add_all(patients)
+    db.commit()
+    [db.refresh(p) for p in patients]
+
+    # ---------------------------
+    # Create 15 Reports (5 draft, 5 submitted, 5 approved)
+    # Each report has:
+    #   - Reporter
+    #   - Disease (1:1)
+    #   - 1-3 Patients (many-to-many)
     # ---------------------------
     report_states = (
         [ReportStateEnum.draft] * 5
@@ -52,23 +72,6 @@ def create_sample_data(db: Session, user_id: int):
         + [ReportStateEnum.approved] * 5
     )
 
-    reports = []
-    for idx, state in enumerate(report_states):
-        report = models.Report(
-            status=state,
-            created_by=user_id,
-            reporter_id=reporters[idx % len(reporters)].id,
-        )
-        db.add(report)
-        reports.append(report)
-
-    db.commit()
-    for report in reports:
-        db.refresh(report)
-
-    # ---------------------------
-    # Create 15 Patients and Diseases (1:1 with Reports)
-    # ---------------------------
     disease_names = ["Influenza", "Ebola", "COVID-19", "Malaria", "Cholera"]
     severity_levels = [
         SeverityLevelEnum.low,
@@ -83,23 +86,20 @@ def create_sample_data(db: Session, user_id: int):
         DiseaseCategoryEnum.other,
     ]
 
-    for idx, report in enumerate(reports):
-        # Patient
-        patient = models.Patient(
-            first_name=f"Patient{idx + 1}",
-            last_name="Lastname",
-            date_of_birth=today - timedelta(days=(20 + idx) * 365),
-            gender=GenderEnum.male if idx % 2 == 0 else GenderEnum.female,
-            medical_record_number=f"MRN-{idx + 1}",
-            patient_address=f"{idx + 1} Health St, City",
-            emergency_contact=f"Emergency Contact {idx + 1}",
-            report_id=report.id,
+    reports = []
+    for idx, status in enumerate(report_states):
+        report = models.Report(
+            status=status,
+            created_by=created_by_user_id,
+            reporter=reporters[idx % 5],
         )
-        db.add(patient)
+        db.add(report)
+        db.commit()
+        db.refresh(report)
 
-        # Disease
+        # Assign Disease (1-to-1)
         disease = models.Disease(
-            disease_name=disease_names[idx % len(disease_names)],
+            disease_name=f"{disease_names[idx % 5]}-{unique_str}-{idx+1}",
             disease_category=disease_categories[idx % len(disease_categories)],
             date_detected=today - timedelta(days=5 + idx),
             symptoms=["fever", "cough"] if idx % 2 == 0 else ["vomiting", "diarrhea"],
@@ -109,4 +109,14 @@ def create_sample_data(db: Session, user_id: int):
         )
         db.add(disease)
 
+        # Link 1-3 Patients
+        patient_subset = patients[idx % 15 : (idx % 15) + (idx % 3) + 1]
+        report.patients.extend(patient_subset)
+
+        reports.append(report)
+
     db.commit()
+
+    print(
+        "✅ Seeded 5 reporters, 15 patients, 15 reports (draft/submitted/approved), each with a disease and patients."
+    )
