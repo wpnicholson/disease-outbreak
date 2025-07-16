@@ -5,9 +5,15 @@ from api.main import app
 from api.database import SessionLocal
 from api.models import User, Report, Reporter, Patient, Disease, AuditLog
 from api.enums import UserRoleEnum
-from api.endpoints.auth import hash_password
+from api.endpoints.auth import hash_password, create_access_token
 import uuid
-from typing import Generator
+
+
+@pytest.fixture(scope="function")
+def client():
+    """FastAPI test client."""
+    with TestClient(app) as c:
+        yield c
 
 
 @pytest.fixture(scope="function")
@@ -17,14 +23,8 @@ def test_run_id():
 
 
 @pytest.fixture(scope="function")
-def client() -> TestClient:
-    """Provides a TestClient instance for synchronous API tests."""
-    return TestClient(app)
-
-
-@pytest.fixture(scope="function")
-def db_session() -> Generator[Session, None, None]:
-    """Provides a SQLAlchemy session for database interactions."""
+def db_session():
+    """Provides a database session for each test function."""
     db = SessionLocal()
     try:
         yield db
@@ -57,3 +57,12 @@ def test_user(db_session: Session, test_run_id: str):
     db_session.query(AuditLog).filter(AuditLog.user_id == user.id).delete()
     db_session.query(User).filter(User.id == user.id).delete()
     db_session.commit()
+
+
+@pytest.fixture(scope="function")
+def auth_headers(test_user):
+    """Generates authorization headers for the test user."""
+    access_token = create_access_token(
+        data={"sub": test_user.email, "role": test_user.role.value}
+    )
+    return {"Authorization": f"Bearer {access_token}"}
