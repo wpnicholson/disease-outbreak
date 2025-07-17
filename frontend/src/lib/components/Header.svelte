@@ -30,7 +30,15 @@
 						page.url.pathname === '/dashboard'
 							? 'border-highlight text-gray-900'
 							: 'border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-800'
-					}`}>Home</a
+					}`}>Dashboard</a
+				>
+				<a
+					href="/dashboard/newreport"
+					class={`inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium ${
+						page.url.pathname === '/dashboard/newreport'
+							? 'border-highlight text-gray-900'
+							: 'border-transparent text-gray-600 hover:border-gray-300 hover:text-gray-800'
+					}`}>New Report</a
 				>
 				<a
 					href="/dashboard/audit-logs"

@@ -1,4 +1,3 @@
-import type { Load } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = ({ locals }) => {
@@ -11,8 +10,6 @@ export const load: PageServerLoad = ({ locals }) => {
     } else {
         login = false;
     }
-
-    console.log('User in the +page.server.ts load function:', user);
 
     // Sent to the sibling `+page.svelte` as props.
     return {

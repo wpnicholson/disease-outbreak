@@ -4,9 +4,11 @@
 		"src/routes/dashboard/+page.server.ts"
 	],
 	"/dashboard/audit-logs": [],
+	"/dashboard/disease": [],
+	"/dashboard/newreport/[id]": [
+		"src/routes/dashboard/newreport/[id]/+page.server.ts"
+	],
 	"/dashboard/reports/[id]": [],
-	"/dashboard/reports/[id]/disease": [],
-	"/dashboard/reports/[id]/patient": [],
 	"/dashboard/reports/[id]/reporter": [],
 	"/dashboard/statistics": [],
 	"/dashboard/summary": [],

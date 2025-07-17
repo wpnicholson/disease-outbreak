@@ -1,11 +1,14 @@
 <script lang="ts">
 	import type { Report } from '$lib/backendtypes';
+	import { onMount } from 'svelte';
 	import NewDisease from '$lib/components/NewDisease.svelte';
+	import TableReports from '$lib/components/TableReports.svelte';
 	const today = new Date().toISOString().split('T')[0];
 
 	// Props come over from the sibling `+page.server.ts`.
 	let { data } = $props();
 	let token = data.token;
+	let reports = $state<Report[] | null>(null);
 	let report = $state<Report | null>(null);
 
 	async function createNewReport() {
@@ -50,61 +53,46 @@
 				Authorization: `Bearer ${token}`
 			},
 			body: JSON.stringify({
-				disease: resDisease,
-				disease_id: resDisease.id
+				status: 'Draft'
 			})
 		});
 		if (res.ok) {
 			const updatedReport = await res.json();
-			console.log('Report updated:', updatedReport);
+			console.log('Report status updated:', updatedReport);
 			report = updatedReport;
 		} else {
-			console.error('Failed to update report');
+			console.error('Failed to update report status');
 			console.error(await res.text());
 		}
 	}
 
-	function once<T extends Event>(fn: ((event: T) => void) | null): (event: T) => void {
-		return function (this: unknown, event: T) {
-			if (fn) fn.call(this, event);
-			fn = null;
-		};
+	async function loadReports() {
+		const res = await fetch('/api/reports/', {
+			method: 'GET',
+			headers: {
+				Authorization: `Bearer ${token}`
+			}
+		});
+		if (res.ok) {
+			reports = await res.json();
+
+			console.log('Reports loaded:', reports);
+		} else {
+			console.error('Failed to load reports');
+		}
 	}
-	function preventDefault<T extends Event>(fn: (event: T) => void): (event: T) => void {
-		return function (this: unknown, event: T) {
-			event.preventDefault();
-			fn.call(this, event);
-		};
-	}
+
+	onMount(() => {
+		loadReports();
+	});
+
 </script>
 
 <div>
-	<h1 class="mb-5 text-2xl font-semibold">New Report</h1>
-
-	<button
-		onclick={createNewReport}
-		class="shadow-xs rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-	>
-		Create New Report
-	</button>
-
-	{#if report}
-		<form>
-			<div class="mt-10 space-y-12">
-				<div
-					class="grid grid-cols-1 gap-x-8 gap-y-10 border-b border-gray-900/10 pb-12 md:grid-cols-3"
-				>
-					<NewDisease {token} {report} />
-				</div>
-			</div>
-			<div class="mt-6 flex items-center justify-end gap-x-6">
-				<button type="button" class="text-sm/6 font-semibold text-gray-900">Cancel</button>
-				<button
-					onclick={once(preventDefault(updateReportStatus))}
-					class="shadow-xs rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-					>Finalise Report</button
-				>
-			</div>
-		</form>
+	<h1 class="mb-5 text-2xl font-semibold">Reports</h1>
+	{#if Array.isArray(reports) && reports.length > 0}
+		<TableReports {reports} />
+	{:else}
+		<p>No reports created yet.</p>
 	{/if}
 </div>

@@ -1,9 +1,11 @@
 <script lang="ts">
 	import type { Report } from '$lib/backendtypes';
+	import { once, preventDefault } from '$lib/utils/preventdefault';
 	const today = new Date().toISOString().split('T')[0];
 
 	let data = $props();
-	let token = $state(data.token);
+	console.log('Data received in NewDisease component:', data);
+	let token = data.token || undefined;
 
 	// When `report` changes shape Svelte does not detect the update in a way
 	// that causes the NewDisease child component to remount or re-evaluate properly.
@@ -18,6 +20,10 @@
 		}
 		if (!report.disease) {
 			console.error('No disease information to update');
+			return;
+		}
+		if (!token) {
+			console.error('No authentication token provided');
 			return;
 		}
 		const symptomsArray: string[] = Array.isArray(report.disease.symptoms)
@@ -47,12 +53,6 @@
 			const diseaseData = await resDisease.json();
 			console.log('Disease data updated:', diseaseData);
 
-			const reportResponse = await fetch(`/api/reports/${report.id}`, {
-				headers: { Authorization: `Bearer ${token}` }
-			});
-			const updatedReport = await reportResponse.json();
-			console.log('The updated report after the disease was created:', updatedReport);
-
 			return diseaseData;
 		} else {
 			console.error('Failed to update disease data');
@@ -60,30 +60,14 @@
 			return false;
 		}
 	}
-
-	function once<T extends Event>(fn: ((event: T) => void) | null): (event: T) => void {
-		return function (this: unknown, event: T) {
-			if (fn) fn.call(this, event);
-			fn = null;
-		};
-	}
-	function preventDefault<T extends Event>(fn: (event: T) => void): (event: T) => void {
-		return function (this: unknown, event: T) {
-			event.preventDefault();
-			fn.call(this, event);
-		};
-	}
 </script>
 
-{#if report}
-	<div>
-		<h2 class="text-base/7 font-semibold text-gray-900">Disease</h2>
-		<div class="mt-1 text-sm/6 text-gray-600">
-			Report ID:
-			<input bind:value={report.id} readonly />
+{#if report?.disease}
+	<form class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 md:col-span-2">
+		<div class="sm:col-span-4">
+			<span class="block text-sm/6 font-medium text-gray-900">Disease id:</span>
+			<input bind:value={report.disease.id} readonly class="block min-w-0 grow py-1.5 pl-1 pr-3 text-base text-gray-900 sm:text-sm/6" />
 		</div>
-	</div>
-	<div class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 md:col-span-2">
 		<div class="sm:col-span-4">
 			<label for="diseaseName" class="block text-sm/6 font-medium text-gray-900">Disease name</label
 			>
@@ -94,7 +78,7 @@
 					<input
 						name="diseaseName"
 						type="text"
-						class="shrink-0 select-none text-base text-gray-500 sm:text-sm/6"
+						class="shrink-0 select-none text-base text-gray-500 sm:text-sm/6 py-1.5 px-3"
 						bind:value={report.disease.disease_name}
 						placeholder="Enter disease name"
 					/>
@@ -111,7 +95,7 @@
 				>
 					<select
 						name="diseasecategory"
-						class="shrink-0 select-none text-base text-gray-500 sm:text-sm/6"
+						class="shrink-0 select-none text-base text-gray-500 sm:text-sm/6 py-1.5 px-3"
 						bind:value={report.disease.disease_category}
 					>
 						<option value="" disabled selected>Select a category</option>
@@ -133,7 +117,7 @@
 				>
 					<select
 						name="severitylevel"
-						class="shrink-0 select-none text-base text-gray-500 sm:text-sm/6"
+						class="shrink-0 select-none text-base text-gray-500 sm:text-sm/6 py-1.5 px-3"
 						bind:value={report.disease.severity_level}
 					>
 						<option value="" disabled selected>Select a severity</option>
@@ -158,7 +142,7 @@
 						name="datedetected"
 						max={today}
 						defaultValue={today}
-						class="shrink-0 select-none text-base text-gray-500 sm:text-sm/6"
+						class="shrink-0 select-none text-base text-gray-500 sm:text-sm/6 py-1.5 px-3"
 						bind:value={report.disease.date_detected}
 					/>
 				</div>
@@ -211,12 +195,15 @@
 				</div>
 			</div>
 		</div>
-		<div class="mt-6 flex items-center justify-end gap-x-6">
+		<div
+			class="flex items-center justify-end gap-x-6 border-t border-gray-900/10 px-4 py-4 sm:px-8"
+		>
 			<button
+				type="submit"
 				onclick={once(preventDefault(updateDisease))}
 				class="shadow-xs rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
 				>Save</button
 			>
 		</div>
-	</div>
+	</form>
 {/if}
