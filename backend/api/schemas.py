@@ -117,10 +117,34 @@ class Disease(DiseaseBase):
 
 # Report Schemas
 class ReportBase(BaseModel):
+    """Base model for report data.
+
+    Sets the `status` field to `draft` by default.
+
+    All other fields are defined in class `Report`.
+
+    Args:
+        BaseModel (BaseModel): Base model for all Pydantic models.
+    """
+
     status: ReportStateEnum = ReportStateEnum.draft
 
 
 class ReportCreate(ReportBase):
+    """Report creation model.
+
+    To create a new report, this model requires only the `status` field, which defaults to `draft`.
+
+    The `created_at` field will be set automatically to the `Datetime` of creation.
+
+    All other fields are optional and can be set later.
+
+    See endpoint POST `/api/reports/` in function `reports.create_report` for more details on report creation.
+
+    Args:
+        ReportBase (ReportBase): Base model for report data.
+    """
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -134,6 +158,19 @@ class ReportCreate(ReportBase):
 
 
 class ReportUpdate(BaseModel):
+    """Report update model.
+
+    Updating a report can be done piecemeal, and so this model sets all fields as optional.
+
+    The `status` field remains defaulted to `draft`, but can be set to any valid `ReportStateEnum`.
+    The `updated_at` field will be set automatically to the current `Datetime` when the report is updated.
+
+    See endpoint PUT `/api/reports/{report_id}` in function `reports.update_report` for more details on report updates.
+
+    Args:
+        BaseModel (BaseModel): Base model for all Pydantic models.
+    """
+
     status: Optional[ReportStateEnum] = ReportStateEnum.draft
     reporter_id: Optional[int] = None
     reporter: Optional[Reporter] = None
@@ -174,6 +211,20 @@ class ReportUpdate(BaseModel):
 
 
 class Report(ReportBase):
+    """Report model for the API.
+
+    Inherits field `status` from `ReportBase` and adds fields for the report's ID, creation date,
+    and relationships to other models.
+
+    The `status` field defaults to `draft`, and the `created_at` field is set automatically
+    to the current `Datetime` when the report is created.
+
+    All other fields are optional and can be set later.
+
+    Args:
+        ReportBase (ReportBase): Base model for report data.
+    """
+
     id: int
     created_at: datetime
     updated_at: Optional[datetime]
