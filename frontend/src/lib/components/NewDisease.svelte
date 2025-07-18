@@ -1,7 +1,6 @@
 <script lang="ts">
 	import type { Report } from '$lib/backendtypes';
 	import { once, preventDefault } from '$lib/utils/preventdefault';
-	import { readonly } from 'svelte/store';
 	const today = new Date().toISOString().split('T')[0];
 
 	// We call this component from within a Svelte `{#if report && token}` block;

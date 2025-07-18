@@ -53,6 +53,16 @@ class ReportPatientsLink(BaseModel):
 
 # Patient Schemas
 class PatientBase(BaseModel):
+    """Base model for patient data.
+
+    Sets the `first_name`, `last_name`, `date_of_birth`, `gender`, `medical_record_number`, and `patient_address` fields as required.
+
+    The `emergency_contact` field is optional.
+
+    Args:
+        BaseModel (BaseModel): Base model for all Pydantic models.
+    """
+
     first_name: str = Field(..., max_length=50)
     last_name: str = Field(..., max_length=50)
     date_of_birth: date
@@ -63,6 +73,18 @@ class PatientBase(BaseModel):
 
 
 class PatientCreate(PatientBase):
+    """Patient creation model.
+
+    Inherits all fields from `PatientBase`.
+
+    Provides an example for JSON schema generation.
+
+    The `emergency_contact` field is optional.
+
+    Args:
+        PatientBase (PatientBase): Base model for patient data.
+    """
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -78,6 +100,16 @@ class PatientCreate(PatientBase):
 
 
 class Patient(PatientBase):
+    """Patient model.
+
+    Inherits all fields from `PatientBase`.
+
+    The `emergency_contact` field is optional.
+
+    Args:
+        PatientBase (PatientBase): Base model for patient data.
+    """
+
     id: int
 
     model_config = {"from_attributes": True}
@@ -211,7 +243,7 @@ class ReportUpdate(BaseModel):
 
 
 class Report(ReportBase):
-    """Report model for the API.
+    """Report model.
 
     Inherits field `status` from `ReportBase` and adds fields for the report's ID, creation date,
     and relationships to other models.

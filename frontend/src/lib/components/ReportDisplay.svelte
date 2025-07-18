@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { Report } from '$lib/backendtypes';
 	import NewDisease from '$lib/components/NewDisease.svelte';
+	import NewPatient from '$lib/components/NewPatient.svelte';
+	import Flyout from '$lib/components/Flyout.svelte';
 
 	// We call this component from within a Svelte `{#if report && token}` block;
 	// so we expect `report` and `token` to be defined.
@@ -43,7 +45,7 @@
 	</div>
 
 	<!-- Disease Information -->
-	<div class="grid grid-cols-1 gap-x-8 gap-y-8 py-10 md:grid-cols-3">
+	<div id="disease-info" class="grid grid-cols-1 gap-x-8 gap-y-8 py-10 md:grid-cols-3">
 		<div class="px-4 sm:px-0">
 			<h2 class="text-base/7 font-semibold text-gray-900">Disease Information</h2>
 			<p class="mt-1 text-sm/6 text-gray-600">Add or update disease information for this report.</p>
@@ -51,6 +53,19 @@
 
 		<div class="shadow-xs bg-slate-100 ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
 			<NewDisease {report} {token} />
+		</div>
+	</div>
+
+	<!-- Patient Information -->
+	<div id="patient-info" class="grid grid-cols-1 gap-x-8 gap-y-8 py-10 md:grid-cols-3">
+		<div class="px-4 sm:px-0">
+			<h2 class="text-base/7 font-semibold text-gray-900">Patient Information</h2>
+			<p class="mt-1 text-sm/6 text-gray-600">Add or update patient information for this report.</p>
+			<Flyout />
+		</div>
+
+		<div class="shadow-xs bg-slate-100 ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
+			<NewPatient {report} {token} />
 		</div>
 	</div>
 </div>
