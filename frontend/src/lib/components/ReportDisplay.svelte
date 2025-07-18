@@ -4,7 +4,7 @@
 
 	// We call this component from within a Svelte `{#if report && token}` block;
 	// so we expect `report` and `token` to be defined.
-	let { report, token }: { report: Report, token: string } = $props();
+	let { report, token }: { report: Report; token: string } = $props();
 
 	console.log('Report component initialized with report:', report);
 </script>
@@ -23,11 +23,19 @@
 				<div class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 					<div class="sm:col-span-4">
 						<span class="block text-sm/6 font-medium text-gray-900">Created</span>
-						<input bind:value={report.created_at} readonly class="block min-w-0 grow py-1.5 pl-1 pr-3 text-base text-gray-900 sm:text-sm/6" />
+						<input
+							bind:value={report.created_at}
+							readonly
+							class="block min-w-0 grow py-1.5 pl-1 pr-3 text-base text-gray-900 sm:text-sm/6"
+						/>
 					</div>
 					<div class="sm:col-span-4">
 						<span class="block text-sm/6 font-medium text-gray-900">Status</span>
-						<input bind:value={report.status} readonly class="block min-w-0 grow py-1.5 pl-1 pr-3 text-base text-gray-900 sm:text-sm/6" />
+						<input
+							bind:value={report.status}
+							readonly
+							class="block min-w-0 grow py-1.5 pl-1 pr-3 text-base text-gray-900 sm:text-sm/6"
+						/>
 					</div>
 				</div>
 			</div>
@@ -42,7 +50,7 @@
 		</div>
 
 		<div class="shadow-xs bg-slate-100 ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
-					<NewDisease {report} {token} />
+			<NewDisease {report} {token} />
 		</div>
 	</div>
 
