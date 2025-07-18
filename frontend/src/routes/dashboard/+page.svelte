@@ -5,7 +5,7 @@
 	import TableReports from '$lib/components/TableReports.svelte';
 	const today = new Date().toISOString().split('T')[0];
 
-	// Props come over from the sibling `+page.server.ts`.
+	// Props come over from the sibling `routes/dashboard/+page.server.ts`.
 	let { data } = $props();
 	let token = data.token;
 	let reports = $state<Report[] | null>(null);
@@ -66,6 +66,7 @@
 		}
 	}
 
+	// When the component mounts load the reports this user has created.
 	async function loadReports() {
 		const res = await fetch('/api/reports/', {
 			method: 'GET',
@@ -76,9 +77,9 @@
 		if (res.ok) {
 			reports = await res.json();
 
-			console.log('Reports loaded:', reports);
+			console.log('Dashboard reports loaded:', reports);
 		} else {
-			console.error('Failed to load reports');
+			console.error('Dashboard failed to load reports');
 		}
 	}
 

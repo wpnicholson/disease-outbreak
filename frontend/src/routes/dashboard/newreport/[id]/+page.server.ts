@@ -5,8 +5,8 @@ import type { PageServerLoad } from './$types';
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8000'; // Set this in your env
 
 export const load: PageServerLoad = async ({ params, locals }) => {
-    const token = locals.token;
-    const id = params.id;
+    const token: string | undefined = locals.token;
+    const id: string = params.id;
 
     const res = await fetch(`${BACKEND_URL}/api/reports/${id}`, {
         method: 'GET',
@@ -17,7 +17,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
     });
 
     if (res.ok) {
-        // Sent to the sibling `+page.svelte` as props.
+        // Sent to the sibling `routes/dashboard/newreport/[id]/+page.svelte` as props.
         return { id, report: res.ok ? await res.json() : null, token };
     } else {
         console.error('Failed to fetch report:', res.statusText);

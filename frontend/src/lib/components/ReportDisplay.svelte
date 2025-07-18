@@ -1,6 +1,10 @@
 <script lang="ts">
+	import type { Report } from '$lib/backendtypes';
 	import NewDisease from '$lib/components/NewDisease.svelte';
-	let { report, token } = $props();
+
+	// We call this component from within a Svelte `{#if report && token}` block;
+	// so we expect `report` and `token` to be defined.
+	let { report, token }: { report: Report, token: string } = $props();
 
 	console.log('Report component initialized with report:', report);
 </script>
@@ -30,6 +34,7 @@
 		</div>
 	</div>
 
+	<!-- Disease Information -->
 	<div class="grid grid-cols-1 gap-x-8 gap-y-8 py-10 md:grid-cols-3">
 		<div class="px-4 sm:px-0">
 			<h2 class="text-base/7 font-semibold text-gray-900">Disease Information</h2>
@@ -37,11 +42,7 @@
 		</div>
 
 		<div class="shadow-xs bg-slate-100 ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
-			<div class="px-4 py-6 sm:p-8">
-				<div class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 					<NewDisease {report} {token} />
-				</div>
-			</div>
 		</div>
 	</div>
 

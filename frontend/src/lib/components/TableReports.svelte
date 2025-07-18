@@ -1,9 +1,9 @@
 <script lang="ts">
-    import type { Report } from '$lib/backendtypes';
+	import type { Report } from '$lib/backendtypes';
 	import { formatDate } from '$lib/utils/formatdate';
-    let data = $props();
-    let reports = $state<Report[]>(data.reports || []);
-    console.log('Data received in TableReports page:', reports);
+	let { reports }: { reports: Report[] | [] } = $props();
+
+	console.log('Data received in TableReports page:', reports);
 </script>
 
 <div class="px-4 sm:px-6 lg:px-8">
@@ -54,27 +54,38 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-gray-200">
-                        {#each reports as report}
-						<tr>
-							<td class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0"
-								>{report.id}</td
-							>
-							<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{formatDate(report.created_at)}</td>
-							<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500"
-								>{formatDate(report.updated_at)}</td
-							>
-							<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{report.reporter?.id ?? 'None'}</td>
-                            <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{report.patients.length == 0 ? 'None' : report.patients.length}</td>
-							<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{report.disease?.id ?? 'None'}</td>
-							<td
-								class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0"
-							>
-								<a href="/dashboard/newreport/{report.id}" class="text-indigo-600 hover:text-indigo-900"
-									>Edit<span class="sr-only">report id {report.id}</span></a
+						{#each reports as report}
+							<tr>
+								<td
+									class="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0"
+									>{report.id}</td
 								>
-							</td>
-						</tr>
-                        {/each}
+								<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500"
+									>{formatDate(report.created_at)}</td
+								>
+								<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500"
+									>{formatDate(report.updated_at)}</td
+								>
+								<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500"
+									>{report.reporter?.id ?? 'None'}</td
+								>
+								<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500"
+									>{report.patients.length == 0 ? 'None' : report.patients.length}</td
+								>
+								<td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500"
+									>{report.disease?.id ?? 'None'}</td
+								>
+								<td
+									class="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-0"
+								>
+									<a
+										href="/dashboard/newreport/{report.id}"
+										class="text-indigo-600 hover:text-indigo-900"
+										>Edit<span class="sr-only">report id {report.id}</span></a
+									>
+								</td>
+							</tr>
+						{/each}
 					</tbody>
 				</table>
 			</div>

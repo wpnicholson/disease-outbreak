@@ -1,37 +1,27 @@
 <script lang="ts">
 	import type { Report } from '$lib/backendtypes';
 	import { once, preventDefault } from '$lib/utils/preventdefault';
+	import { readonly } from 'svelte/store';
 	const today = new Date().toISOString().split('T')[0];
 
-	let data = $props();
-	console.log('Data received in NewDisease component:', data);
-	let token = data.token || undefined;
+	// We call this component from within a Svelte `{#if report && token}` block;
+	// so we expect `report` and `token` to be defined.
+	let { report, token }: { report: Report; token: string } = $props();
 
-	// When `report` changes shape Svelte does not detect the update in a way
-	// that causes the NewDisease child component to remount or re-evaluate properly.
-	// So to force reactivity we reassign a new object to `report` after the mutation.
-	// This works because Svelte tracks object references for reactivity.
-	let report = $state<Report | null>(data.report || null);
+	function parseSymptoms(symptoms: string | string[] | undefined): string[] {
+		if (Array.isArray(symptoms)) return symptoms;
+		return (symptoms || '')
+			.split(',')
+			.map((s: string) => s.trim())
+			.filter(Boolean);
+	}
 
 	async function updateDisease() {
-		if (!report) {
-			console.error('No report to update');
-			return;
-		}
 		if (!report.disease) {
 			console.error('No disease information to update');
 			return;
 		}
-		if (!token) {
-			console.error('No authentication token provided');
-			return;
-		}
-		const symptomsArray: string[] = Array.isArray(report.disease.symptoms)
-			? report.disease.symptoms
-			: (report.disease.symptoms || '')
-					.split(',')
-					.map((s) => s.trim())
-					.filter(Boolean);
+		const symptomsArray: string[] = parseSymptoms(report.disease.symptoms);
 
 		const resDisease = await fetch(`/api/reports/${report.id}/disease`, {
 			method: 'POST',
@@ -63,39 +53,49 @@
 </script>
 
 {#if report?.disease}
-	<form class="grid max-w-2xl grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6 md:col-span-2">
-		<div class="sm:col-span-4">
-			<span class="block text-sm/6 font-medium text-gray-900">Disease id:</span>
-			<input bind:value={report.disease.id} readonly class="block min-w-0 grow py-1.5 pl-1 pr-3 text-base text-gray-900 sm:text-sm/6" />
-		</div>
-		<div class="sm:col-span-4">
-			<label for="diseaseName" class="block text-sm/6 font-medium text-gray-900">Disease name</label
-			>
-			<div class="mt-2">
-				<div
-					class="inline-flex w-fit items-center rounded-md bg-white outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600"
-				>
+	<form class="shadow-xs bg-white ring-1 ring-gray-900/5 sm:rounded-xl md:col-span-2">
+		<div class="px-4 py-6 sm:p-8">
+			<!-- Disease ID -->
+			<div class="sm:col-span-3">
+				<label for="diseaseId" class="block text-sm/6 font-medium text-gray-900">Disease id:</label>
+				<div class="mt-2">
 					<input
+						id="diseaseId"
+						name="diseaseId"
+						type="text"
+						class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+						value={report.disease.id}
+						readonly
+					/>
+				</div>
+			</div>
+
+			<!-- Disease details -->
+			<div class="sm:col-span-3">
+				<label for="diseaseName" class="block text-sm/6 font-medium text-gray-900"
+					>Disease name</label
+				>
+				<div class="mt-2">
+					<input
+						id="diseaseName"
 						name="diseaseName"
 						type="text"
-						class="shrink-0 select-none text-base text-gray-500 sm:text-sm/6 py-1.5 px-3"
+						class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
 						bind:value={report.disease.disease_name}
 						placeholder="Enter disease name"
 					/>
 				</div>
 			</div>
-		</div>
-		<div class="sm:col-span-4">
-			<label for="diseasecategory" class="block text-sm/6 font-medium text-gray-900"
-				>Disease category</label
-			>
-			<div class="mt-2">
-				<div
-					class="inline-flex w-fit items-center rounded-md bg-white outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600"
+
+			<!-- Disease category -->
+			<div class="sm:col-span-3">
+				<label for="diseasecategory" class="block text-sm/6 font-medium text-gray-900"
+					>Disease category</label
 				>
+				<div class="mt-2">
 					<select
 						name="diseasecategory"
-						class="shrink-0 select-none text-base text-gray-500 sm:text-sm/6 py-1.5 px-3"
+						class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
 						bind:value={report.disease.disease_category}
 					>
 						<option value="" disabled selected>Select a category</option>
@@ -106,18 +106,16 @@
 					</select>
 				</div>
 			</div>
-		</div>
-		<div class="sm:col-span-4">
-			<label for="severitylevel" class="block text-sm/6 font-medium text-gray-900"
-				>Severity level</label
-			>
-			<div class="mt-2">
-				<div
-					class="inline-flex w-fit items-center rounded-md bg-white outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600"
+
+			<!-- Severity level -->
+			<div class="sm:col-span-3">
+				<label for="severitylevel" class="block text-sm/6 font-medium text-gray-900"
+					>Severity level</label
 				>
+				<div class="mt-2">
 					<select
 						name="severitylevel"
-						class="shrink-0 select-none text-base text-gray-500 sm:text-sm/6 py-1.5 px-3"
+						class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
 						bind:value={report.disease.severity_level}
 					>
 						<option value="" disabled selected>Select a severity</option>
@@ -128,63 +126,65 @@
 					</select>
 				</div>
 			</div>
-		</div>
-		<div class="sm:col-span-4">
-			<label for="datedetected" class="block text-sm/6 font-medium text-gray-900"
-				>Date detected</label
-			>
-			<div class="mt-2">
-				<div
-					class="inline-flex w-fit items-center rounded-md bg-white outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600"
+
+			<!-- Date detected -->
+			<div class="sm:col-span-3">
+				<label for="datedetected" class="block text-sm/6 font-medium text-gray-900"
+					>Date detected</label
 				>
+				<div class="mt-2">
 					<input
 						type="date"
 						name="datedetected"
 						max={today}
 						defaultValue={today}
-						class="shrink-0 select-none text-base text-gray-500 sm:text-sm/6 py-1.5 px-3"
+						class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
 						bind:value={report.disease.date_detected}
 					/>
 				</div>
 			</div>
-		</div>
-		<div class="col-span-full">
-			<label for="symptoms" class="block text-sm/6 font-medium text-gray-900">Symptoms</label>
-			<div class="mt-2">
-				<textarea
-					name="symptoms"
-					id="symptoms"
-					rows="3"
-					bind:value={report.disease.symptoms}
-					class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-				></textarea>
+
+			<!-- Symptoms -->
+			<div class="col-span-full">
+				<label for="symptoms" class="block text-sm/6 font-medium text-gray-900">Symptoms</label>
+				<div class="mt-2">
+					<textarea
+						name="symptoms"
+						id="symptoms"
+						rows="3"
+						bind:value={report.disease.symptoms}
+						class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+					></textarea>
+				</div>
+				<p class="mt-3 text-sm/6 text-gray-600">List symptoms separated by commas.</p>
 			</div>
-			<p class="mt-3 text-sm/6 text-gray-600">List symptoms separated by commas.</p>
-		</div>
-		<div class="col-span-full">
-			<label for="labs" class="block text-sm/6 font-medium text-gray-900">Laboratory results</label>
-			<div class="mt-2">
-				<textarea
-					name="labs"
-					id="labs"
-					rows="3"
-					bind:value={report.disease.lab_results}
-					class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-				></textarea>
-			</div>
-			<p class="mt-3 text-sm/6 text-gray-600">Enter the laboratory results (if any) here.</p>
-		</div>
-		<div class="sm:col-span-4">
-			<label for="severitylevel" class="block text-sm/6 font-medium text-gray-900"
-				>Treatment status</label
-			>
-			<div class="mt-2">
-				<div
-					class="inline-flex w-fit items-center rounded-md bg-white outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600"
+
+			<!-- Laboratory results -->
+			<div class="col-span-full">
+				<label for="labs" class="block text-sm/6 font-medium text-gray-900"
+					>Laboratory results</label
 				>
+				<div class="mt-2">
+					<textarea
+						name="labs"
+						id="labs"
+						rows="3"
+						bind:value={report.disease.lab_results}
+						class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
+					></textarea>
+				</div>
+				<p class="mt-3 text-sm/6 text-gray-600">Enter the laboratory results (if any) here.</p>
+			</div>
+
+			<!-- Treatment status -->
+			<div class="sm:col-span-4">
+				<label for="severitylevel" class="block text-sm/6 font-medium text-gray-900"
+					>Treatment status</label
+				>
+				<div class="mt-2">
 					<select
 						name="severitylevel"
-						class="shrink-0 select-none text-base text-gray-500 sm:text-sm/6"
+						class="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
 						bind:value={report.disease.treatment_status}
 					>
 						<option value="" disabled selected>Select a treatment status</option>
@@ -195,9 +195,9 @@
 				</div>
 			</div>
 		</div>
-		<div
-			class="flex items-center justify-end gap-x-6 border-t border-gray-900/10 px-4 py-4 sm:px-8"
-		>
+
+		<!-- Save button -->
+		<div class="flex items-center justify-end gap-x-6 border-t border-gray-900/10 px-4 py-4 sm:px-8">
 			<button
 				type="submit"
 				onclick={once(preventDefault(updateDisease))}
