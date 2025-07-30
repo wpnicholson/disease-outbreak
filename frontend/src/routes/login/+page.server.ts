@@ -47,10 +47,10 @@ export const actions = {
         // Set cookies
         event.cookies.set('session_id', access_token, {
             path: '/',
-            httpOnly: true,
-            sameSite: 'lax',
-            secure: isProduction,
-            maxAge: 60 * 60
+            httpOnly: true,  // Prevents JavaScript access to the cookie (XSS protection).
+            sameSite: 'strict',  // Prevents CSRF attacks by ensuring the cookie is sent only in same-site requests.
+            secure: isProduction,  // Ensures the cookie is sent only over HTTPS in production.
+            maxAge: 60 * 60  // 1 hour.
         });
 
         // Optional: store user in a non-httpOnly cookie for client-side access
@@ -63,5 +63,16 @@ export const actions = {
         });
 
         throw redirect(303, '/dashboard');
+    },
+
+    logout: async (event) => {
+        // Clear session cookies on logout
+        event.cookies.delete('session_id', { path: '/' });
+        event.cookies.delete('session_user', { path: '/' });
+
+        event.locals.user = undefined;
+        event.locals.token = undefined;
+
+        throw redirect(303, '/login');
     }
 } satisfies Actions;
